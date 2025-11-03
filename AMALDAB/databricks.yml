@@ -6,7 +6,6 @@ bundle:
 include:
   - resources/**/*.yml
   - config/*.yml
-  - DataPlatform/**/*
 
 artifacts:
   notebooks:
