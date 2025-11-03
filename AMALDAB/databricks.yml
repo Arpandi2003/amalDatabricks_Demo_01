@@ -28,7 +28,7 @@ targets:
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
-      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/pandi.anbu@avatest.in/.bundle/${bundle.name}/${bundle.target}
 
     permissions:
       - group_name: DataEngineering
