@@ -33,17 +33,16 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
-          @"
-          [PROD]
-          host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DATABRICKS_CLIENT_SECRET }}"
-          [QA]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DATABRICKS_CLIENT_SECRET }}"
-          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-                    icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
+          $configContent = @"
+[PROD]
+host = ${{ vars.PROD_DATABRICKS_HOST }}
+token = ${{ secrets.DATABRICKS_TOKEN }}
+[QA]
+host = ${{ vars.QA_DATABRICKS_HOST }}
+token = ${{ secrets.DATABRICKS_TOKEN }}
+"@
+          $configContent | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
           databricks auth profiles
 
       # Step 4: Deploy Databricks bundle
