@@ -27,7 +27,6 @@ jobs:
           choco install databricks-cli -y
 
       # Step 3: Authenticate Databricks Workspace
-      - # Step 3: Authenticate Databricks Workspace
       - name: Authenticate Databricks Workspace
         shell: pwsh
         run: |
