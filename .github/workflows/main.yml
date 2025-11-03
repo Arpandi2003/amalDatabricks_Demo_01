@@ -50,6 +50,7 @@ jobs:
         run: |
           # Navigate to the correct directory
           cd AMALDAB
+          databricks bundle deploy -t dev
           
           echo "Current directory: $(Get-Location)"
           echo "Files in current directory:"
