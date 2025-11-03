@@ -14,8 +14,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
+          fetch-depth: 0  # Fetch full history if needed
+      
       # Step 2: Install Databricks CLI
       - name: Install Databricks CLI
         shell: pwsh
@@ -24,9 +24,10 @@ jobs:
           [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
           choco install databricks-cli -y
-
-      # Step 3: Authenticate Databricks Workspace
-      - name: Authenticate Databricks Workspace
+          
+      # Step 3: Configure Databricks authentication
+      - name: Configure Databricks authentication
+        shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
           @"
@@ -39,19 +40,20 @@ jobs:
           client_id = "${{ vars.DATABRICKS_CLIENT_ID }}"
           client_secret = "${{ secrets.DATABRICKS_CLIENT_SECRET }}"
           "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME`:F"
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
           databricks auth profiles
 
-      # Step 4: Deploy Databricks bundle to dev
+      # Step 4: Deploy Databricks bundle
       - name: Deploy Databricks bundle
         shell: pwsh
-        env:
-          DATABRICKS_CONFIG_PROFILE: QA
         run: |
-          # Navigate to the correct directory
-          cd AMALDAB
-          databricks bundle deploy -t dev
+          # Check if folders exist and navigate
+          if (Test-Path "AMALDAB") {
+            cd AMALDAB
+          } elseif (Test-Path "AmalDatabricksDAB") {
+            cd AmalDatabricksDAB
+          }
           
-          echo "Current directory: $(Get-Location)"
-          echo "Files in current directory:"
-          Get-ChildItem
+          databricks bundle validate -t dev
+          databricks bundle test -t dev
+          databricks bundle deploy -t dev
