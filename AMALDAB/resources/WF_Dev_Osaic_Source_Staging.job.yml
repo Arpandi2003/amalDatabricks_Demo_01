@@ -88,8 +88,7 @@ resources:
         Source: Osaic
       queue:
         enabled: true
-      run_as:
-        user_name: ${var.email_notifications}
+
 
 
 
