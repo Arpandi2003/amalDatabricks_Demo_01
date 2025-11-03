@@ -62,3 +62,4 @@ jobs:
           echo "Current directory: $(Get-Location)"
           echo "Files in current directory:"
           Get-ChildItem
+          databricks bundle validate -t dev
