@@ -1,0 +1,40 @@
+# resources/jobs/WF_Dev_Axiom_Source_Staging_Init_v1.yml
+resources:
+  jobs:
+    WF_Dev_Axiom_Source_Staging_Init_v1:
+      name: WF_Axiom_Source_Staging_Init_v1
+      tasks:
+        - task_key: NB_FlatFile_Axiom_Init
+          notebook_task:
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Axiom_Extraction.py
+            base_parameters:
+              DO_YOU_WANNA_TEST(YES/NO): "YES"
+          min_retry_interval_millis: 900000
+          email_notifications:
+            on_success:
+              - ${var.email_notifications}
+            on_failure:
+              - ${var.email_notifications}
+          job_cluster_key: NB_FlatFile_Axiom_Init_cluster
+  
+      job_clusters:
+        - job_cluster_key: NB_FlatFile_Axiom_Init_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            azure_attributes:
+              first_on_demand: 1
+              availability: SPOT_WITH_FALLBACK_AZURE
+              spot_bid_max_price: -1
+            node_type_id: Standard_D8ads_v5
+            spark_env_vars:
+              PYSPARK_PYTHON: /databricks/python3/bin/python3
+            enable_elastic_disk: true
+            data_security_mode: USER_ISOLATION
+            runtime_engine: STANDARD
+            autoscale:
+              min_workers: 2
+              max_workers: 4
+
+      tags:
+        Source: Axiom
+        Environment: ${bundle.target}
