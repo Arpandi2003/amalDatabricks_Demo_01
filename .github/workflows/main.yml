@@ -63,6 +63,6 @@ jobs:
           
           # Validate and deploy
           databricks bundle validate -t dev
-          # databricks bundle deploy -t dev
+          databricks bundle deploy -t dev
           
           echo "Deployment completed successfully!"
