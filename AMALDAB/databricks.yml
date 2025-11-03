@@ -10,7 +10,7 @@ include:
 artifacts:
   notebooks:
     files:
-      - source: DataPlatform/**
+      - source: DataPlatform/**/*.py
 
 targets:
   dev:
