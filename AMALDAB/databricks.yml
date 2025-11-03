@@ -14,7 +14,7 @@ artifacts:
 
 targets:
   dev:
-    mode: development
+    mode: production
     default: true
 
     run_as:
@@ -28,7 +28,7 @@ targets:
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
-      root_path: /Workspace/Users/pandi.anbu@avatest.in/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/AMAL_DEV/${bundle.target}
 
     permissions:
       - group_name: DataEngineering
