@@ -69,7 +69,7 @@ jobs:
           databricks bundles install
           
           # Validate and deploy
-          databricks bundle test -t dev
-          # databricks bundle deploy -t dev
+          databricks bundles test -t dev
+          # databricks bundles deploy -t dev
           
           echo "Deployment completed successfully!"
