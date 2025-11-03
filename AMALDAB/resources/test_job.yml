@@ -1,0 +1,28 @@
+jobs:
+  test_job:
+    name: test_job
+    tasks:
+      - task_key: check_01
+        notebook_task:
+          notebook_path: ./DataPlatform/Extraction/NB_FlatFile_Movement.py
+        sources: WORKSPACE
+        job_cluster_key: job_cluster
+        max_retries: 1
+        min_retry_interval_millis: 900000
+    job_clusters:
+      - job_cluster_key: job_cluster
+        new_cluster:
+          spark_version: 16.4.x-scala2.12
+          azure_attributes:
+            first_on_demand: 1
+            availability: SPOT_WITH_FALLBACK_AZURE
+            spot_bid_max_price: -1
+          node_type_id: Standard_Dids_vd
+          spark_env_vars:
+            PYSPARK_PYTHON: /databricks/python3/bin/python3
+          enable_local_disk_encryption: true
+          data_security_mode: SINGLE_USER
+          runtime_engine: PHOTON
+          num_workers: 8
+    queue:
+      enabled: true

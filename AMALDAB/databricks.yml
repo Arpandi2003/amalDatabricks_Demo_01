@@ -10,7 +10,7 @@ include:
 artifacts:
   notebooks:
     files:
-      - source: metrics/data_platform/*
+      - source: DataPlatform/**
 
 targets:
   dev:
