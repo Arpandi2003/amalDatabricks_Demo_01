@@ -5,7 +5,7 @@ resources:
       tasks:
         - task_key: check_01
           notebook_task:
-            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Movement.py
+            notebook_path: ./DataPlatform/Extraction/NB_FlatFile_Movement.py
             source: WORKSPACE
           job_cluster_key: Job_cluster
           max_retries: 1
