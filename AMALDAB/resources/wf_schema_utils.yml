@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    access_permission:
+      name: access_permission
+      tasks:
+        - task_key: grant_access
+          notebook_task:
+            notebook_path: ../common/schema_utils.py
+            source: WORKSPACE
+          job_cluster_key: schema_utils_cluster
+      job_clusters:
+        - job_cluster_key: schema_utils_cluster
+          new_cluster:
+            spark_version: 16.4.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            spark_env_vars:
+              PYSPARK_PYTHON: /databricks/python3/bin/python3
+            data_security_mode: DATA_SECURITY_MODE_DEDICATED
+            runtime_engine: STANDARD
+            kind: CLASSIC_PREVIEW
+            is_single_node: true
+      queue:
+        enabled: true
