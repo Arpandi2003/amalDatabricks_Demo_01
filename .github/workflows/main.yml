@@ -11,7 +11,7 @@ on:
       - amalDatabricks_Demo_01/**
       - resources/**
       - config/**
-      - DataPlatform/**
+      - metrics/data_platform/**
       - .github/workflows/**
       - databricks.yml
 jobs:
