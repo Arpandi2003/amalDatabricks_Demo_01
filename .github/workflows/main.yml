@@ -63,3 +63,4 @@ jobs:
           echo "Files in current directory:"
           Get-ChildItem
           databricks bundle validate -t dev
+          databricks bundle deploy -t dev
