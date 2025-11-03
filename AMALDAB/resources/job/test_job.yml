@@ -8,8 +8,8 @@ resources:
       tasks:
         - task_key: check_01
           notebook_task:
-            notebook_path: /AMALDAB/DataPlatform/Extraction/NB_FlatFile_Movement
-            source: WORKSPACE
+            notebook_path: DataPlatform/Extraction/NB_FlatFile_Movement.py
+            source: GIT
           job_cluster_key: job_cluster
           max_retries: 1
           min_retry_interval_millis: 900000
