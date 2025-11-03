@@ -5,7 +5,7 @@ resources:
       tasks:
         - task_key: NB_Osaic_Dev_Extraction_DataLoad
           notebook_task:
-            notebook_path: /Workspace/Shared/amalDatabricks/DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction
+            notebook_path: ./DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
             source: WORKSPACE
           existing_cluster_id: 1220-202650-d05px4n8
           min_retry_interval_millis: 900000
@@ -17,16 +17,16 @@ resources:
                 value: 900
           email_notifications:
             on_failure:
-              - pandianbu@amalgamatedbank.com
+              - ${var.email_notification}
             on_duration_warning_threshold_exceeded:
-              - pandianbu@amalgamatedbank.com
+              - ${var.email_notification}
           notification_settings:
             no_alert_for_skipped_runs: true
         - task_key: NB_Osaic_Dev_FileMoveMent
           depends_on:
             - task_key: NB_Osaic_Dev_Extraction_DataLoad
           notebook_task:
-            notebook_path: /Workspace/Shared/amalDatabricks/DataPlatform/Extraction/NB_FlatFile_Movement
+            notebook_path: ./DataPlatform/Extraction/NB_FlatFile_Movement.py
             base_parameters:
               SubjectArea: Osaic
             source: WORKSPACE
@@ -39,11 +39,11 @@ resources:
                 value: 900
           email_notifications:
             on_success:
-              - pandianbu@amalgamatedbank.com
+              - ${var.email_notifications}
             on_failure:
-              - pandianbu@amalgamatedbank.com
+              - ${var.email_notifications}
             on_duration_warning_threshold_exceeded:
-              - pandianbu@amalgamatedbank.com
+              - ${var.email_notifications}
       job_clusters:
         - job_cluster_key: DataMovement
           new_cluster:
@@ -89,4 +89,5 @@ resources:
       queue:
         enabled: true
       run_as:
-        user_name: dfiery@amalgamatedbank.com
+        user_name: ${var.email_notification}
+
