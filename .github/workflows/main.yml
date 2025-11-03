@@ -43,36 +43,26 @@ jobs:
           "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
           icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
           
-          # Test the configuration
-          Write-Host "Config file content:"
-          Get-Content "$env:USERPROFILE\.databrickscfg"
-          
           Write-Host "Testing Databricks authentication..."
           databricks auth profiles
 
-      # Step 4: Deploy Databricks bundle to dev
-      - name: Mock Deploy Databricks bundle
+      # Step 4: Deploy Databricks bundle
+      - name: Deploy Databricks bundle
         shell: pwsh
         env:
           DATABRICKS_CONFIG_PROFILE: QA
         run: |
-          # Navigate to the correct directory
           cd AMALDAB
           
           echo "Current directory: $(Get-Location)"
           echo "Files in current directory:"
           Get-ChildItem
-          databricks bundle test -t dev
           
-      #Step 5: Actual Depolyment
-      
-      - name: Actual Deployment After Mock
-        shell: pwsh
-        env:
-          DATABRICKS_CONFIG_PROFILE: QA
-        run: |
-          # Navigate to the correct directory
-          cd AMALDAB
+          # Install bundle dependencies
+          databricks bundles install
           
-          echo "Deployment Gonna Happen: $(Get-Location)"
-          databricks bundle deploy -t dev
+          # Validate and deploy
+          databricks bundle validate
+          databricks bundle deploy
+          
+          echo "Deployment completed successfully!"
