@@ -17,9 +17,9 @@ resources:
                 value: 900
           email_notifications:
             on_failure:
-              - ${var.email_notification}
+              - ${var.email_notifications}
             on_duration_warning_threshold_exceeded:
-              - ${var.email_notification}
+              - ${var.email_notifications}
           notification_settings:
             no_alert_for_skipped_runs: true
         - task_key: NB_Osaic_Dev_FileMoveMent
@@ -89,5 +89,6 @@ resources:
       queue:
         enabled: true
       run_as:
-        user_name: ${var.email_notification}
+        user_name: ${var.email_notifications}
+
 
