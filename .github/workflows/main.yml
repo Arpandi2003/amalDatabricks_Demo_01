@@ -60,16 +60,24 @@ jobs:
           DATABRICKS_CONFIG_PROFILE: QA
         run: |
           cd AMALDAB
-          
+      
           echo "Current directory: $(Get-Location)"
           echo "Files in current directory:"
           Get-ChildItem
-          
-          # Install bundle dependencies
-          databricks bundles install
-          
-          # Validate and deploy
-          databricks bundles test -t dev
-          # databricks bundles deploy -t dev
-          
-          echo "Deployment completed successfully!"
+      
+          # Ensure we're using the correct Databricks CLI (new v0.200+)
+          databricks --version
+      
+          # Install bundle dependencies (e.g., wheels, libraries)
+          databricks bundle install
+      
+          # Validate the bundle configuration (catches null refs, missing fields, etc.)
+          # databricks bundle validate --target dev
+      
+          # Run tests if needed (optional; remove if not part of your workflow)
+          databricks bundle test --target dev
+      
+          # Deploy to dev environment
+          databricks bundle deploy --target dev
+      
+          echo "✅ Deployment completed successfully!"
