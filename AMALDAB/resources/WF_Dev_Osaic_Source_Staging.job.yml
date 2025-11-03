@@ -7,7 +7,6 @@ resources:
           notebook_task:
             notebook_path: ../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
             source: WORKSPACE
-          existing_cluster_id: 1220-202650-d05px4n8
           min_retry_interval_millis: 900000
           timeout_seconds: 2400
           health:
@@ -88,6 +87,7 @@ resources:
         Source: Osaic
       queue:
         enabled: true
+
 
 
 
