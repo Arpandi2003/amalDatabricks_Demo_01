@@ -27,20 +27,28 @@ jobs:
           choco install databricks-cli -y
 
       # Step 3: Authenticate Databricks Workspace
+      - # Step 3: Authenticate Databricks Workspace
       - name: Authenticate Databricks Workspace
+        shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
           @"
           [PROD]
-          host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DATABRICKS_CLIENT_SECRET }}"
+          host = ${{ vars.PROD_DATABRICKS_HOST }}
+          client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
+          client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
           [QA]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DATABRICKS_CLIENT_SECRET }}"
+          host = ${{ vars.QA_DATABRICKS_HOST }}
+          client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
+          client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
           "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME`:F"
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
+          
+          # Test the configuration
+          Write-Host "Config file content:"
+          Get-Content "$env:USERPROFILE\.databrickscfg"
+          
+          Write-Host "Testing Databricks authentication..."
           databricks auth profiles
 
       # Step 4: Deploy Databricks bundle to dev
