@@ -51,7 +51,7 @@ jobs:
           databricks auth profiles
 
       # Step 4: Deploy Databricks bundle to dev
-      - name: Deploy Databricks bundle
+      - name: Mock Deploy Databricks bundle
         shell: pwsh
         env:
           DATABRICKS_CONFIG_PROFILE: QA
@@ -62,5 +62,17 @@ jobs:
           echo "Current directory: $(Get-Location)"
           echo "Files in current directory:"
           Get-ChildItem
-          databricks bundle validate -t dev
+          databricks bundle test -t dev
+          
+      #Step 5: Actual Depolyment
+      
+      - name: Actual Deployment After Mock
+        shell: pwsh
+        env:
+          DATABRICKS_CONFIG_PROFILE: QA
+        run: |
+          # Navigate to the correct directory
+          cd AMALDAB
+          
+          echo "Deployment Gonna Happen: $(Get-Location)"
           databricks bundle deploy -t dev
