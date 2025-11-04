@@ -1,7 +1,7 @@
 resources:
   pipelines:
-    pipeline_lakebasedemo85b4aea9_ab37_4467_834a_ad52354df323:
-      name: lakebasedemo85b4aea9-ab37-4467-834a-ad52354df323
+    pipeline_lakebasedemo85b4aea9_ab37_4467_834a_ad52354df323_01:
+      name: lakebasedemo85b4aea9-ab37-4467-834a-ad52354df323_01
       managed_definition:
         database_table_sync:
           custom_slice: ${var.email_notifications}
