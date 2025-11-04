@@ -1,0 +1,30 @@
+resources:
+  pipelines:
+    pipeline_lakebasedemo85b4aea9_ab37_4467_834a_ad52354df323:
+      name: lakebasedemo85b4aea9-ab37-4467-834a-ad52354df323
+      managed_definition:
+        database_table_sync:
+          custom_slice: ${var.email_notifications}
+          billing_mode: PRIVATE_PREVIEW
+          sinks:
+            - src_table: dw_nfi_catalog.bronze.employees
+              dest_table: databricks_postgres.bronze.employees
+              dest_table_uc_name: lakebasedemo.bronze.employees
+              primary_key:
+                - id
+              online_catalog_name: lakebasedemo
+              database_user: databricks_writer_16450
+              create_full_copy: true
+              use_load_data_optimization: true
+              request_table_level_credentials: true
+              dest_table_id: df6f7223-c96f-478b-b462-27ff225cfc4d
+              resource_control_options:
+                load_data_parallelism: 1
+                load_data_rate_limit_bytes_per_second: 0
+                source_table_size_limit: 214748364800
+                metastore_total_online_table_size_limit: 2199023255552
+              query_federation_user: databricks_reader_16450
+              storage_engine: HADRON
+              creator: ${var.email_notifications}
+      schema: bronze
+      catalog: dw_nfi_catalog
