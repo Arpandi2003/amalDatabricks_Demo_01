@@ -86,7 +86,7 @@ resources:
           depends_on:
             - task_key: NB_Bronze_IFS_BatchControl_DataLoad
           notebook_task:
-            notebook_path: ../DataPlatform/Extraction/NB_SQL_TDW_H360_Extraction
+            notebook_path: ../DataPlatform/Extraction/NB_SQL_TDW_H360_Extraction.py
             base_parameters:
               batch: "3"
               TableList: 92,62,63,69,110,112,116,124,126,128,129,138,142,146,12,59,240,555,40,558
@@ -168,3 +168,4 @@ resources:
       email_notifications:
             on_failure:
               - ${var.email_notifications}
+
