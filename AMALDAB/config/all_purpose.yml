@@ -3,7 +3,7 @@
 resources:
   clusters:
     amal-eus-de-cluster:
-      cluster_name: AMAL-EUS-DE
+      cluster_name: AMAL-EUS-DE-Cluster
       spark_version: 16.4.x-scala2.12
       azure_attributes:
         availability: ON_DEMAND_AZURE
