@@ -38,13 +38,6 @@ jobs:
           pip install requests databricks-cli
           # Add other dependencies your prerequisites script needs
 
-      - name: Convert notebook to Python script (if needed)
-        shell: pwsh
-        run: |
-          # If prerequisites.ipynb needs to be converted to .py
-          pip install jupyter nbconvert
-          jupyter nbconvert --to python AMALDAB/config/prerequisites.ipynb --output-dir .
-
       - name: Run prerequisites Python script
         id: prerequisites
         shell: pwsh
