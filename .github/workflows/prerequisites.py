@@ -119,7 +119,7 @@ def get_databricks_instance():
     return "https://adb-201068313543333.13.azuredatabricks.net"
 
 def get_databricks_token():
-    return token
+    return os.environ.get('DATABRICKS_TOKEN')
 
 def get_all_clusters():
     """Extract all active clusters from Databricks workspace"""
