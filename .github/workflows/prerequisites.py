@@ -6,7 +6,7 @@ import yaml
 
 def get_databricks_instance():
     """Get Databricks instance from environment variable"""
-    instance = os.environ.get('QA_DATABRICKS_HOST')
+    instance = os.environ.get('DATABRICKS_HOST')
     if not instance:
         raise ValueError("DATABRICKS_HOST environment variable is not set")
     
@@ -147,7 +147,7 @@ def main():
     print("Extracting clusters and SQL warehouses from Databricks workspace...")
     
     # Debug environment variables
-    print(f"DATABRICKS_HOST: {os.environ.get('QA_DATABRICKS_HOST')}")
+    print(f"DATABRICKS_HOST: {os.environ.get('DATABRICKS_HOST')}")
     print(f"DATABRICKS_TOKEN length: {len(os.environ.get('DATABRICKS_TOKEN', ''))}")
     
     clusters = get_all_clusters()
