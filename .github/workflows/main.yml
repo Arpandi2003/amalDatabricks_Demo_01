@@ -50,7 +50,7 @@ jobs:
           echo "Running prerequisites script..."
           
           # Option 1: If you converted to .py file
-          python workflows/prerequisites.py
+          python .github/workflows/prerequisites.py
           
           # Option 2: If running notebook directly (uncomment if needed)
           # python -m papermill AMALDAB/config/prerequisites.ipynb output.ipynb
