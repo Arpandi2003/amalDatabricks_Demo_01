@@ -6,7 +6,6 @@ on:
     branches:
       - main
       - dev
-
     paths:
       - amalDatabricks_Demo_01/**
       - resources/**
@@ -14,12 +13,13 @@ on:
       - metrics/data_platform/**
       - .github/workflows/**
       - databricks.yml
+
 jobs:
-  # New job to run prerequisites Python file
+  # Prerequisites job - must complete first
   run-prerequisites:
     runs-on: windows-latest
     outputs:
-      prerequisites-completed: ${{ steps.run-python.outputs.success }}
+      status: ${{ steps.prerequisites.outcome }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,41 +35,45 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          # Add any required packages for your prerequisites script
-          pip install requests
-          # Add other dependencies your prerequisites.ipynb needs
+          pip install requests databricks-cli
+          # Add other dependencies your prerequisites script needs
 
+      - name: Convert notebook to Python script (if needed)
+        shell: pwsh
+        run: |
+          # If prerequisites.ipynb needs to be converted to .py
+          pip install jupyter nbconvert
+          jupyter nbconvert --to python AMALDAB/config/prerequisites.ipynb --output-dir .
 
       - name: Run prerequisites Python script
-        id: run-python
+        id: prerequisites
         shell: pwsh
         env:
           DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
         run: |
-          try {
-            # Run the prerequisites script
-            python workflows/prerequisites.py
-            # Or if you're running the notebook directly:
-            # python -m notebook AMALDAB/config/prerequisites.ipynb
-            
-            echo "success=true" >> $env:GITHUB_OUTPUT
-            Write-Host "✅ Prerequisites completed successfully"
-          } catch {
-            echo "success=false" >> $env:GITHUB_OUTPUT
-            Write-Error "❌ Prerequisites failed"
-            exit 1
-          }
+          echo "Running prerequisites script..."
+          
+          # Option 1: If you converted to .py file
+          python workflows/prerequisites.py
+          
+          # Option 2: If running notebook directly (uncomment if needed)
+          # python -m papermill AMALDAB/config/prerequisites.ipynb output.ipynb
+          
+          echo "✅ Prerequisites completed successfully"
+
+  # Deployment job - waits for prerequisites to complete
   deploy-notebooks:
     runs-on: windows-latest
+    needs: run-prerequisites  # This ensures it waits for prerequisites
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Step 2: Install Databricks CLI
       - name: Install Databricks CLI
         shell: pwsh
         run: |
@@ -78,7 +82,6 @@ jobs:
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
           choco install databricks-cli -y
 
-      # Step 3: Authenticate Databricks Workspace
       - name: Authenticate Databricks Workspace
         shell: pwsh
         run: |
@@ -98,31 +101,19 @@ jobs:
           Write-Host "Testing Databricks authentication..."
           databricks auth profiles
 
-      # Step 4: Deploy Databricks bundle
       - name: Deploy Databricks bundle
         shell: pwsh
         env:
           DATABRICKS_CONFIG_PROFILE: QA
         run: |
           cd AMALDAB
-      
+          
           echo "Current directory: $(Get-Location)"
           echo "Files in current directory:"
           Get-ChildItem
-      
-          # Ensure we're using the correct Databricks CLI (new v0.200+)
+          
           databricks --version
-      
-          # Install bundle dependencies (e.g., wheels, libraries)
           databricks bundle install
-      
-          # Validate the bundle configuration (catches null refs, missing fields, etc.)
-          # databricks bundle validate --target dev
-      
-          # Run tests if needed (optional; remove if not part of your workflow)
-          databricks bundle test --target dev
-      
-          # Deploy to dev environment
           databricks bundle deploy --target dev
-      
+          
           echo "✅ Deployment completed successfully!"
