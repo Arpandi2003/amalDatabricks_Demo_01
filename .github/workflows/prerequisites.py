@@ -129,6 +129,10 @@ def get_all_clusters():
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
+    if len(token)>0:
+        print(token)
+    else:
+        raise "issue.................." 
     response = requests.get(
         f"{instance}/api/2.0/clusters/list",
         headers=headers
