@@ -49,7 +49,7 @@ jobs:
         run: |
           try {
             # Run the prerequisites script
-            python prerequisites.py
+            python workflows/prerequisites.py
             # Or if you're running the notebook directly:
             # python -m notebook AMALDAB/config/prerequisites.ipynb
             
