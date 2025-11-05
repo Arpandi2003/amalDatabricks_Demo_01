@@ -5,108 +5,108 @@ token = os.environ.get('DATABRICKS_TOKEN')
 # COMMAND ----------
 
 # DBTITLE 1,Policies
-import requests
-import json
-import yaml
-import os
+# import requests
+# import json
+# import yaml
+# import os
 
-# Databricks configuration
-DATABRICKS_INSTANCE = "https://adb-201068313543333.13.azuredatabricks.net"
-DATABRICKS_TOKEN = {token}
+# # Databricks configuration
+# DATABRICKS_INSTANCE = "https://adb-201068313543333.13.azuredatabricks.net"
+# DATABRICKS_TOKEN = {token}
 
-def get_all_policies():
-    """Extract all cluster policies from Databricks workspace"""
-    headers = {
-        "Authorization": f"Bearer {DATABRICKS_TOKEN}",
-        "Content-Type": "application/json"
-    }
+# def get_all_policies():
+#     """Extract all cluster policies from Databricks workspace"""
+#     headers = {
+#         "Authorization": f"Bearer {DATABRICKS_TOKEN}",
+#         "Content-Type": "application/json"
+#     }
     
-    # Get all policies
-    response = requests.get(
-        f"{DATABRICKS_INSTANCE}/api/2.0/policies/clusters/list",
-        headers=headers
-    )
+#     # Get all policies
+#     response = requests.get(
+#         f"{DATABRICKS_INSTANCE}/api/2.0/policies/clusters/list",
+#         headers=headers
+#     )
     
-    if response.status_code != 200:
-        raise Exception(f"Failed to fetch policies: {response.text}")
+#     if response.status_code != 200:
+#         raise Exception(f"Failed to fetch policies: {response.text}")
     
-    policies_data = response.json()
+#     policies_data = response.json()
     
-    # Get detailed policy definitions
-    policies_with_definitions = []
-    for policy in policies_data.get('policies', []):
-        policy_id = policy['policy_id']
+#     # Get detailed policy definitions
+#     policies_with_definitions = []
+#     for policy in policies_data.get('policies', []):
+#         policy_id = policy['policy_id']
         
-        # Get policy definition
-        def_response = requests.get(
-            f"{DATABRICKS_INSTANCE}/api/2.0/policies/clusters/get",
-            headers=headers,
-            params={"policy_id": policy_id}
-        )
+#         # Get policy definition
+#         def_response = requests.get(
+#             f"{DATABRICKS_INSTANCE}/api/2.0/policies/clusters/get",
+#             headers=headers,
+#             params={"policy_id": policy_id}
+#         )
         
-        if def_response.status_code == 200:
-            policy_detail = def_response.json()
-            policies_with_definitions.append(policy_detail)
-        else:
-            print(f"Warning: Could not fetch details for policy {policy_id}")
+#         if def_response.status_code == 200:
+#             policy_detail = def_response.json()
+#             policies_with_definitions.append(policy_detail)
+#         else:
+#             print(f"Warning: Could not fetch details for policy {policy_id}")
     
-    return policies_with_definitions
+#     return policies_with_definitions
 
-def convert_policy_to_bundle_format(policy):
-    """Convert Databricks policy to Asset Bundle format"""
-    policy_name = policy['name'].lower().replace(' ', '-').replace('_', '-')
+# def convert_policy_to_bundle_format(policy):
+#     """Convert Databricks policy to Asset Bundle format"""
+#     policy_name = policy['name'].lower().replace(' ', '-').replace('_', '-')
     
-    bundle_policy = {
-        'name': policy['name'],
-        'definition': policy.get('definition', {})
-    }
+#     bundle_policy = {
+#         'name': policy['name'],
+#         'definition': policy.get('definition', {})
+#     }
     
-    # Add description if exists
-    if policy.get('description'):
-        bundle_policy['description'] = policy['description']
+#     # Add description if exists
+#     if policy.get('description'):
+#         bundle_policy['description'] = policy['description']
     
-    return policy_name, bundle_policy
+#     return policy_name, bundle_policy
 
-def generate_bundle_yaml(policies):
-    """Generate complete Databricks Asset Bundle YAML"""
+# def generate_bundle_yaml(policies):
+#     """Generate complete Databricks Asset Bundle YAML"""
     
-    # Convert policies to bundle format
-    bundle_policies = {}
-    for policy in policies:
-        policy_name, bundle_policy = convert_policy_to_bundle_format(policy)
-        bundle_policies[policy_name] = bundle_policy
+#     # Convert policies to bundle format
+#     bundle_policies = {}
+#     for policy in policies:
+#         policy_name, bundle_policy = convert_policy_to_bundle_format(policy)
+#         bundle_policies[policy_name] = bundle_policy
     
-    # Policies resources
-    policies_config = {
-        'resources': {
-            'policies': bundle_policies
-        }
-    }
+#     # Policies resources
+#     policies_config = {
+#         'resources': {
+#             'policies': bundle_policies
+#         }
+#     }
     
-    return  policies_config
+#     return  policies_config
 
-def main():
-    print("Extracting policies from Databricks workspace...")
+# def main():
+#     print("Extracting policies from Databricks workspace...")
     
-    # Get all policies
-    policies = get_all_policies()
-    print(f"Found {len(policies)} policies")
+#     # Get all policies
+#     policies = get_all_policies()
+#     print(f"Found {len(policies)} policies")
     
-    # Generate YAML configurations
-    policies_config = generate_bundle_yaml(policies)
+#     # Generate YAML configurations
+#     policies_config = generate_bundle_yaml(policies)
     
-    # Create directory structur
+#     # Create directory structur
     
-    # Write policies file
-    with open('../resources/SharedObjects/policies.yml', 'w') as f:
-        yaml.dump(policies_config, f, default_flow_style=False, indent=2)
+#     # Write policies file
+#     with open('../resources/SharedObjects/policies.yml', 'w') as f:
+#         yaml.dump(policies_config, f, default_flow_style=False, indent=2)
     
-    print("✅ Policy extraction completed!")
-    print("📁 Files created:")
-    print("   - resources/policies.yml")
+#     print("✅ Policy extraction completed!")
+#     print("📁 Files created:")
+#     print("   - resources/policies.yml")
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
 # COMMAND ----------
 

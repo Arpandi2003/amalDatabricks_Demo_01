@@ -15,6 +15,51 @@ on:
       - .github/workflows/**
       - databricks.yml
 jobs:
+  # New job to run prerequisites Python file
+  run-prerequisites:
+    runs-on: windows-latest
+    outputs:
+      prerequisites-completed: ${{ steps.run-python.outputs.success }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          # Add any required packages for your prerequisites script
+          pip install requests
+          # Add other dependencies your prerequisites.ipynb needs
+
+
+      - name: Run prerequisites Python script
+        id: run-python
+        shell: pwsh
+        env:
+          DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          try {
+            # Run the prerequisites script
+            python prerequisites.py
+            # Or if you're running the notebook directly:
+            # python -m notebook AMALDAB/config/prerequisites.ipynb
+            
+            echo "success=true" >> $env:GITHUB_OUTPUT
+            Write-Host "✅ Prerequisites completed successfully"
+          } catch {
+            echo "success=false" >> $env:GITHUB_OUTPUT
+            Write-Error "❌ Prerequisites failed"
+            exit 1
+          }
   deploy-notebooks:
     runs-on: windows-latest
     steps:
