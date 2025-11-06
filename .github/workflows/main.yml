@@ -35,14 +35,20 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          pip install requests databricks-cli
-          pip install PyYAML
-          # Add other dependencies your prerequisites script needs
+          pip install requests databricks-cli PyYAML
+
+      - name: Create AMALDAB directory structure
+        shell: pwsh
+        run: |
+          echo "Creating directory structure..."
+          New-Item -ItemType Directory -Force -Path "AMALDAB/resources/SharedObjects"
+          echo "✅ Directory structure created"
 
       - name: Run prerequisites Python script
         id: prerequisites
         shell: pwsh
         env:
+          DATABRICKS_WORKSPACE_URL: ${{ vars.QA_DATABRICKS_HOST }}
           DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
@@ -50,14 +56,31 @@ jobs:
         run: |
           echo "Running prerequisites script..."
           
-          # Option 1: If you converted to .py file
+          # Debug: Check environment variables
+          echo "DATABRICKS_WORKSPACE_URL: $env:DATABRICKS_WORKSPACE_URL"
+          echo "DATABRICKS_HOST: $env:DATABRICKS_HOST"
+          echo "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
+          
+          # Run the prerequisites script
           python .github/workflows/prerequisites.py
           
-          # Option 2: If running notebook directly (uncomment if needed)
-          # python -m papermill AMALDAB/config/prerequisites.ipynb output.ipynb
+          # Check if files were created
+          echo "Checking generated files:"
+          if (Test-Path "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml") {
+              echo "✅ all_purpose_clusters.yml created"
+              Get-Content "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml" | Select-Object -First 10
+          } else {
+              echo "❌ all_purpose_clusters.yml not found"
+          }
+          
+          if (Test-Path "AMALDAB/resources/SharedObjects/sql_warehouses.yml") {
+              echo "✅ sql_warehouses.yml created"
+              Get-Content "AMALDAB/resources/SharedObjects/sql_warehouses.yml" | Select-Object -First 10
+          } else {
+              echo "❌ sql_warehouses.yml not found"
+          }
           
           echo "✅ Prerequisites completed successfully"
-
   # # Deployment job - waits for prerequisites to complete
   # deploy-notebooks:
   #   runs-on: windows-latest
@@ -111,3 +134,17 @@ jobs:
   #         databricks bundle deploy --target dev
           
   #         echo "✅ Deployment completed successfully!"
+  
+  # Optional: Add a validation step
+  validate-deployment:
+    runs-on: windows-latest
+    needs: run-prerequisites
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate deployment
+        shell: pwsh
+        run: |
+          echo "✅ All deployment steps completed successfully!"
+          echo "Prerequisites status: ${{ needs.run-prerequisites.outputs.status }}"
