@@ -180,7 +180,7 @@ def main():
     # SQL warehouses
     warehouses_config = generate_sql_warehouses_bundle_yaml(warehouses)
     if warehouses_config:
-        with open('../AMALDAB/resources/SharedObjects/sql_warehouses.yml', 'w') as f:
+        with open('././AMALDAB/resources/SharedObjects/sql_warehouses.yml', 'w') as f:
             yaml.dump(warehouses_config, f, default_flow_style=False, indent=2)
         print("   - AMALDAB/resources/SharedObjects/sql_warehouses.yml")
     
