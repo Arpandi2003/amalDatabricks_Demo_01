@@ -162,7 +162,7 @@ def main():
     # All-purpose clusters
     clusters_config = generate_clusters_bundle_yaml(clusters)
     if clusters_config:
-        with open('../AMALDAB/resources/SharedObjects/all_purpose_clusters.yml', 'w') as f:
+        with open('../resources/SharedObjects/all_purpose_clusters.yml', 'w') as f:
             yaml.dump(clusters_config, f, default_flow_style=False, indent=2)
         print("   - resources/SharedObjects/all_purpose_clusters.yml")
     
