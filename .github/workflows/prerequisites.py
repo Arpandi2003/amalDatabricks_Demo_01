@@ -6,21 +6,36 @@ import yaml
 
 def get_databricks_instance():
     """Get Databricks instance from environment variable"""
-    instance = os.getenv('DATABRICKS_HOST','').strip()
+    # Try multiple possible environment variable names
+    instance = os.getenv('DATABRICKS_WORKSPACE_URL', '').strip()
     if not instance:
-        raise ValueError("DATABRICKS_HOST environment variable is not set")
+        instance = os.getenv('DATABRICKS_HOST', '').strip()
+    if not instance:
+        instance = os.getenv('DATABRICKS_URL', '').strip()
+    if not instance:
+        raise ValueError("Databricks workspace URL environment variable is not set. Set DATABRICKS_WORKSPACE_URL, DATABRICKS_HOST, or DATABRICKS_URL")
+    
+    # Clean the URL - remove any CRLF characters and whitespace
+    instance = instance.strip().rstrip('\r\n')
     
     # Ensure it has https:// prefix
     if not instance.startswith('https://'):
         instance = f"https://{instance}"
     
+    print(f"DEBUG: Using workspace URL: '{instance}'")
     return instance
 
 def get_databricks_token():
     """Get Databricks token from environment variable"""
-    token = os.getenv('DATABRICKS_TOKEN','').strip()
+    # Try multiple possible environment variable names
+    token = os.getenv('DATABRICKS_TOKEN', '').strip()
     if not token:
-        raise ValueError("DATABRICKS_TOKEN environment variable is not set")
+        token = os.getenv('DATABRICKS_ACCESS_TOKEN', '').strip()
+    if not token:
+        raise ValueError("Databricks token environment variable is not set. Set DATABRICKS_TOKEN or DATABRICKS_ACCESS_TOKEN")
+    
+    # Clean the token
+    token = token.strip().rstrip('\r\n')
     return token
 
 def get_all_clusters():
@@ -146,9 +161,8 @@ def main():
     """Main function to extract clusters and SQL warehouses"""
     print("Extracting clusters and SQL warehouses from Databricks workspace...")
     
-    # Debug environment variables
-    print(f"DATABRICKS_HOST: {os.getenv('DATABRICKS_HOST','').strip()}")
-    print(f"DATABRICKS_TOKEN length: {len(os.getenv('DATABRICKS_TOKEN', '').strip())}")
+    # Create directory structure
+    os.makedirs('../AMALDAB/resources/SharedObjects', exist_ok=True)
     
     clusters = get_all_clusters()
     warehouses = get_all_sql_warehouses()
@@ -156,22 +170,19 @@ def main():
     print(f"Found {len(clusters)} clusters")
     print(f"Found {len(warehouses)} SQL warehouses")
     
-    # Create directory structure
-    os.makedirs('../resources/SharedObjects', exist_ok=True)
-    
     # All-purpose clusters
     clusters_config = generate_clusters_bundle_yaml(clusters)
     if clusters_config:
-        with open('../resources/SharedObjects/all_purpose_clusters.yml', 'w') as f:
+        with open('../AMALDAB/resources/SharedObjects/all_purpose_clusters.yml', 'w') as f:
             yaml.dump(clusters_config, f, default_flow_style=False, indent=2)
-        print("   - resources/SharedObjects/all_purpose_clusters.yml")
+        print("   - AMALDAB/resources/SharedObjects/all_purpose_clusters.yml")
     
     # SQL warehouses
     warehouses_config = generate_sql_warehouses_bundle_yaml(warehouses)
     if warehouses_config:
         with open('../AMALDAB/resources/SharedObjects/sql_warehouses.yml', 'w') as f:
             yaml.dump(warehouses_config, f, default_flow_style=False, indent=2)
-        print("   - resources/SharedObjects/sql_warehouses.yml")
+        print("   - AMALDAB/resources/SharedObjects/sql_warehouses.yml")
     
     print("SUCCESS: Extraction completed!")
 
