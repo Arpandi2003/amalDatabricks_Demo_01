@@ -162,14 +162,14 @@ def main():
     # All-purpose clusters
     clusters_config = generate_clusters_bundle_yaml(clusters)
     if clusters_config:
-        with open('../resources/SharedObjects/all_purpose_clusters.yml', 'w') as f:
+        with open('../AMALDAB/resources/SharedObjects/all_purpose_clusters.yml', 'w') as f:
             yaml.dump(clusters_config, f, default_flow_style=False, indent=2)
         print("   - resources/SharedObjects/all_purpose_clusters.yml")
     
     # SQL warehouses
     warehouses_config = generate_sql_warehouses_bundle_yaml(warehouses)
     if warehouses_config:
-        with open('../resources/SharedObjects/sql_warehouses.yml', 'w') as f:
+        with open('../AMALDAB/resources/SharedObjects/sql_warehouses.yml', 'w') as f:
             yaml.dump(warehouses_config, f, default_flow_style=False, indent=2)
         print("   - resources/SharedObjects/sql_warehouses.yml")
     
