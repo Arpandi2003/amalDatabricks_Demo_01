@@ -81,63 +81,63 @@ jobs:
           }
           
           echo "✅ Prerequisites completed successfully"
-  # # Deployment job - waits for prerequisites to complete
-  # deploy-notebooks:
-  #   runs-on: windows-latest
-  #   needs: run-prerequisites  # This ensures it waits for prerequisites
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+  # Deployment job - waits for prerequisites to complete
+  deploy-notebooks:
+    runs-on: windows-latest
+    needs: run-prerequisites  # This ensures it waits for prerequisites
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  #     - name: Install Databricks CLI
-  #       shell: pwsh
-  #       run: |
-  #         Set-ExecutionPolicy Bypass -Scope Process -Force
-  #         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-  #         iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-  #         choco install databricks-cli -y
+      - name: Install Databricks CLI
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          choco install databricks-cli -y
 
-  #     - name: Authenticate Databricks Workspace
-  #       shell: pwsh
-  #       run: |
-  #         New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
-  #         @"
-  #         [PROD]
-  #         host = ${{ vars.PROD_DATABRICKS_HOST }}
-  #         client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
-  #         client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-  #         [QA]
-  #         host = ${{ vars.QA_DATABRICKS_HOST }}
-  #         client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
-  #         client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-  #         "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-  #         icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
+      - name: Authenticate Databricks Workspace
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
+          @"
+          [PROD]
+          host = ${{ vars.PROD_DATABRICKS_HOST }}
+          client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
+          client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+          [QA]
+          host = ${{ vars.QA_DATABRICKS_HOST }}
+          client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
+          client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
           
-  #         Write-Host "Testing Databricks authentication..."
-  #         databricks auth profiles
+          Write-Host "Testing Databricks authentication..."
+          databricks auth profiles
 
-  #     - name: Deploy Databricks bundle
-  #       shell: pwsh
-  #       env:
-  #         DATABRICKS_CONFIG_PROFILE: QA
-  #       run: |
-  #         cd AMALDAB
+      - name: Deploy Databricks bundle
+        shell: pwsh
+        env:
+          DATABRICKS_CONFIG_PROFILE: QA
+        run: |
+          cd AMALDAB
           
-  #         echo "Current directory: $(Get-Location)"
-  #         echo "Files in current directory:"
-  #         Get-ChildItem
+          echo "Current directory: $(Get-Location)"
+          echo "Files in current directory:"
+          Get-ChildItem
           
-  #         databricks --version
-  #         databricks bundle install
-  #         databricks bundle deploy --target dev
+          databricks --version
+          databricks bundle install
+          databricks bundle deploy --target dev
           
-  #         echo "✅ Deployment completed successfully!"
+          echo "✅ Deployment completed successfully!"
   
   # Optional: Add a validation step
   validate-deployment:
-    runs-on: windows-latest
+    runs-on: deploy-notebooks
     needs: run-prerequisites
     steps:
       - name: Checkout repository
