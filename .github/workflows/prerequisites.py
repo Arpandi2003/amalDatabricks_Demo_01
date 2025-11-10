@@ -422,7 +422,7 @@ def main():
 
     for cat in catalogs:
         cat_name = cat["name"]
-        print(f"  → Catalog: {cat_name}")
+        print(f"Catalog: {cat_name}")
 
         # Catalog DDL
         ddl_statements.append(uc_catalog_ddl(cat))
@@ -435,7 +435,7 @@ def main():
         for sch in get_schemas(cat_name):
             sch_name = sch["name"]
             full_sch = f"{cat_name}.{sch_name}"
-            print(f"    → Schema: {full_sch}")
+            print(f" Schema: {full_sch}")
 
             ddl_statements.append(uc_schema_ddl(cat_name, sch))
 
@@ -461,7 +461,7 @@ def main():
             # Functions: API doesn’t return DDL — skip or add stub
             funcs = get_functions(cat_name, sch_name)
             if funcs:
-                print(f"       {len(funcs)} functions found (DDL not available via REST API)")
+                print(f" {len(funcs)} functions found (DDL not available via REST API)")
 
     # ===== 3. PERSIST OUTPUTS =====
     if ddl_statements:
