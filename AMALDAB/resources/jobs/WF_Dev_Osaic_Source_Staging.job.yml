@@ -6,7 +6,7 @@ resources:
         - task_key: NB_Osaic_Dev_Extraction_DataLoad
           notebook_task:
             notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
-            # source: WORKSPACE
+            # source: WORKSPACE -- having this to ignore the null pointer exception
           min_retry_interval_millis: 900000
           timeout_seconds: 2400
           health:
@@ -28,7 +28,7 @@ resources:
             notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Movement.py
             base_parameters:
               SubjectArea: Osaic
-            # source: WORKSPACE
+            # source: WORKSPACE -- having this to ignore the null pointer exception
           job_cluster_key: DataMovement
           min_retry_interval_millis: 900000
           health:
