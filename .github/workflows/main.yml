@@ -101,7 +101,7 @@ jobs:
           } else {
               echo "➡️ No changes detected; nothing to commit."
           }    
-  Deployment job - waits for prerequisites to complete
+  # Deployment job - waits for prerequisites to complete
   deploy-notebooks:
     runs-on: windows-latest
     needs: run-prerequisites  # This ensures it waits for prerequisites
@@ -158,7 +158,7 @@ jobs:
   # Optional: Add a validation step
   validate-deployment:
     runs-on: windows-latest
-    needs: run-prerequisites
+    needs: deploy-notebooks
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
