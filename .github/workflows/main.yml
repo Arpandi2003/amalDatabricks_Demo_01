@@ -21,10 +21,16 @@ jobs:
     outputs:
       status: ${{ steps.prerequisites.outcome }}
     steps:
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GIT_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -81,6 +87,20 @@ jobs:
           }
           
           echo "✅ Prerequisites completed successfully"
+          
+      - name: Commit generated files to Git
+        shell: pwsh
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add AMALDAB/resources/SharedObjects/
+          if (-not (git diff --cached --quiet)) {
+              git commit -m "chore: auto-generate Databricks cluster & warehouse configs"
+              git push
+              echo "✅ Changes committed and pushed to repo."
+          } else {
+              echo "➡️ No changes detected; nothing to commit."
+          }    
   # Deployment job - waits for prerequisites to complete
   deploy-notebooks:
     runs-on: windows-latest
