@@ -9,7 +9,7 @@ resources:
       tasks:
         - task_key: NB_Bronze_IFS_BatchControl_DataLoad
           notebook_task:
-            notebook_path: ../DataPlatform/Extraction/NB_SQL_TDW_H360_Extraction_Framework_IFS_BatchControl.py
+            notebook_path: ./../DataPlatform/Extraction/NB_SQL_TDW_H360_Extraction_Framework_IFS_BatchControl.py
             base_parameters:
               batch: "2"
               TableList: "218"
