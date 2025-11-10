@@ -125,7 +125,7 @@ def get_jobs() -> List[Dict]:
 
 def get_connections() -> List[Dict]:
     # Note: Connections API is /2.0/, NOT /2.1/unity-catalog/
-    url = f"{get_databricks_instance()}/api/2.0/connections"
+    url = f"{get_databricks_instance()}/api/2.1/unity-catalog/connections"
     try:
         data = api_get(url)
         return data.get("connections", [])
