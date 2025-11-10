@@ -51,21 +51,21 @@ def api_get(url: str, timeout: int = 60) -> Any:
 
 def safe_write_yml(filepath: str, data: Dict) -> None:
     if not data:
-        print(f"⚠️ Skipping empty YAML: {filepath}")
+        print(f"Skipping empty YAML: {filepath}")
         return
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, indent=2, sort_keys=False)
-    print(f"✅ Wrote: {filepath}")
+    print(f" Wrote: {filepath}")
 
 def safe_write_sql(filepath: str, content: str) -> None:
     if not content.strip():
-        print(f"⚠️ Skipping empty SQL: {filepath}")
+        print(f" Skipping empty SQL: {filepath}")
         return
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(content.strip() + "\n")
-    print(f"✅ Wrote: {filepath}")
+    print(f" Wrote: {filepath}")
 
 def to_bundle_name(name: str) -> str:
     return (
@@ -130,7 +130,7 @@ def get_connections() -> List[Dict]:
         data = api_get(url)
         return data.get("connections", [])
     except Exception as e:
-        print(f"⚠️ Skipping connections (API may be disabled): {e}")
+        print(f" Skipping connections (API may be disabled): {e}")
         return []
 
 # ===================================================================
@@ -180,7 +180,7 @@ def get_grants_on(securable_type: str, full_name: str) -> List[Dict]:
         data = api_get(url)
         return data.get("privilege_assignments", [])
     except Exception as e:
-        print(f"  ⚠️ Grants on {securable_type} `{full_name}`: {e}")
+        print(f"  Grants on {securable_type} `{full_name}`: {e}")
         return []
 
 # ===================================================================
@@ -362,7 +362,7 @@ def grant_to_sql(grant: Dict, securable_type: str, full_name: str) -> str:
 # ===================================================================
 
 def main():
-    print("🚀 Starting Databricks DR Configuration Backup")
+    print(" Starting Databricks DR Configuration Backup")
     base_dir = "./AMALDAB/resources/SharedObjects"
     ddl_dir = "./AMALDAB/resources/uc_ddl"
 
@@ -415,7 +415,7 @@ def main():
         safe_write_yml(f"{base_dir}/connections.yml", {"resources": {"connections": resources["connections"]}})
 
     # ===== 2. UNITY CATALOG METADATA =====
-    print("\n🗃️ Fetching Unity Catalog metadata...")
+    print("\n Fetching Unity Catalog metadata...")
     catalogs = get_catalogs()
     ddl_statements = []
     grant_statements = []
@@ -461,7 +461,7 @@ def main():
             # Functions: API doesn’t return DDL — skip or add stub
             funcs = get_functions(cat_name, sch_name)
             if funcs:
-                print(f"      ⚠️ {len(funcs)} functions found (DDL not available via REST API)")
+                print(f"       {len(funcs)} functions found (DDL not available via REST API)")
 
     # ===== 3. PERSIST OUTPUTS =====
     if ddl_statements:
@@ -469,9 +469,9 @@ def main():
     if grant_statements:
         safe_write_sql(f"{ddl_dir}/99_grants.ddl.sql", "\n".join(grant_statements))
 
-    print("\n🎉 DR backup completed!")
-    print(f"📁 Bundle configs: {base_dir}")
-    print(f"🗃️ UC DDL & grants: {ddl_dir}")
+    print("\n DR backup completed!")
+    print(f" Bundle configs: {base_dir}")
+    print(f" UC DDL & grants: {ddl_dir}")
 
 if __name__ == "__main__":
     main()
