@@ -104,7 +104,7 @@ jobs:
   # Deployment job - waits for prerequisites to complete
   deploy-notebooks:
     runs-on: windows-latest
-    # needs: run-prerequisites  # This ensures it waits for prerequisites
+    needs: run-prerequisites  # This ensures it waits for prerequisites
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
