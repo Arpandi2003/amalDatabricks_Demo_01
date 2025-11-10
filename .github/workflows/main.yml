@@ -2,17 +2,17 @@ name: Databricks Notebooks Deployment
 
 on:
   workflow_dispatch:
-  # push:
+  push:
     # branches:
     #   - main
     #   - dev
-    # paths:
-    #   - amalDatabricks_Demo_01/**
-    #   - resources/**
-    #   - config/**
-    #   - metrics/data_platform/**
-    #   - .github/workflows/**
-    #   - databricks.yml
+    paths:
+      - amalDatabricks_Demo_01/**
+      - resources/**
+      - config/**
+      - metrics/data_platform/**
+      - .github/workflows/**
+      - databricks.yml
 
 jobs:
   # Prerequisites job - must complete first
