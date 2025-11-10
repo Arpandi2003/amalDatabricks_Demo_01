@@ -16,95 +16,95 @@ on:
 
 jobs:
   # Prerequisites job - must complete first
-  run-prerequisites:
-    runs-on: windows-latest
-    outputs:
-      status: ${{ steps.prerequisites.outcome }}
-    steps:
-      - name: Configure Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+  # run-prerequisites:
+  #   runs-on: windows-latest
+  #   outputs:
+  #     status: ${{ steps.prerequisites.outcome }}
+  #   steps:
+  #     - name: Configure Git
+  #       run: |
+  #         git config --global user.name "github-actions[bot]"
+  #         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GIT_TOKEN }}
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #         token: ${{ secrets.GIT_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.8'
 
-      - name: Install Python dependencies
-        shell: pwsh
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests databricks-cli PyYAML
+  #     - name: Install Python dependencies
+  #       shell: pwsh
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install requests databricks-cli PyYAML
 
-      - name: Create AMALDAB directory structure
-        shell: pwsh
-        run: |
-          echo "Creating directory structure..."
-          New-Item -ItemType Directory -Force -Path "AMALDAB/resources/SharedObjects"
-          echo "✅ Directory structure created"
+  #     - name: Create AMALDAB directory structure
+  #       shell: pwsh
+  #       run: |
+  #         echo "Creating directory structure..."
+  #         New-Item -ItemType Directory -Force -Path "AMALDAB/resources/SharedObjects"
+  #         echo "✅ Directory structure created"
 
-      - name: Run prerequisites Python script
-        id: prerequisites
-        shell: pwsh
-        env:
-          DATABRICKS_WORKSPACE_URL: ${{ vars.QA_DATABRICKS_HOST }}
-          DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-          DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
-          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-        run: |
-          echo "Running prerequisites script..."
+  #     - name: Run prerequisites Python script
+  #       id: prerequisites
+  #       shell: pwsh
+  #       env:
+  #         DATABRICKS_WORKSPACE_URL: ${{ vars.QA_DATABRICKS_HOST }}
+  #         DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
+  #         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+  #         DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+  #         DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+  #       run: |
+  #         echo "Running prerequisites script..."
           
-          # Debug: Check environment variables
-          echo "DATABRICKS_WORKSPACE_URL: $env:DATABRICKS_WORKSPACE_URL"
-          echo "DATABRICKS_HOST: $env:DATABRICKS_HOST"
-          echo "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
+  #         # Debug: Check environment variables
+  #         echo "DATABRICKS_WORKSPACE_URL: $env:DATABRICKS_WORKSPACE_URL"
+  #         echo "DATABRICKS_HOST: $env:DATABRICKS_HOST"
+  #         echo "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
           
-          # # Run the prerequisites script
-          # python .github/workflows/prerequisites.py
+  #         # # Run the prerequisites script
+  #         # python .github/workflows/prerequisites.py
           
-          # Check if files were created
-          echo "Checking generated files:"
-          if (Test-Path "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml") {
-              echo "✅ all_purpose_clusters.yml created"
-              Get-Content "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml" | Select-Object -First 10
-          } else {
-              echo "❌ all_purpose_clusters.yml not found"
-          }
+  #         # Check if files were created
+  #         echo "Checking generated files:"
+  #         if (Test-Path "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml") {
+  #             echo "✅ all_purpose_clusters.yml created"
+  #             Get-Content "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml" | Select-Object -First 10
+  #         } else {
+  #             echo "❌ all_purpose_clusters.yml not found"
+  #         }
           
-          if (Test-Path "AMALDAB/resources/SharedObjects/sql_warehouses.yml") {
-              echo "✅ sql_warehouses.yml created"
-              Get-Content "AMALDAB/resources/SharedObjects/sql_warehouses.yml" | Select-Object -First 10
-          } else {
-              echo "❌ sql_warehouses.yml not found"
-          }
+  #         if (Test-Path "AMALDAB/resources/SharedObjects/sql_warehouses.yml") {
+  #             echo "✅ sql_warehouses.yml created"
+  #             Get-Content "AMALDAB/resources/SharedObjects/sql_warehouses.yml" | Select-Object -First 10
+  #         } else {
+  #             echo "❌ sql_warehouses.yml not found"
+  #         }
           
-          echo "✅ Prerequisites completed successfully"
+  #         echo "✅ Prerequisites completed successfully"
           
-      - name: Commit generated files to Git
-        shell: pwsh
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add AMALDAB/resources/
-          if (-not (git diff --cached --quiet)) {
-              git commit -m "chore: auto-generate Databricks cluster & warehouse configs"
-              git push
-              echo "✅ Changes committed and pushed to repo."
-          } else {
-              echo "➡️ No changes detected; nothing to commit."
-          }    
+  #     - name: Commit generated files to Git
+  #       shell: pwsh
+  #       run: |
+  #         git config --global user.name "github-actions[bot]"
+  #         git config --global user.email "github-actions[bot]@users.noreply.github.com"
+  #         git add AMALDAB/resources/
+  #         if (-not (git diff --cached --quiet)) {
+  #             git commit -m "chore: auto-generate Databricks cluster & warehouse configs"
+  #             git push
+  #             echo "✅ Changes committed and pushed to repo."
+  #         } else {
+  #             echo "➡️ No changes detected; nothing to commit."
+  #         }    
   # Deployment job - waits for prerequisites to complete
   deploy-notebooks:
     runs-on: windows-latest
-    needs: run-prerequisites  # This ensures it waits for prerequisites
+    # needs: run-prerequisites  # This ensures it waits for prerequisites
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
