@@ -12,8 +12,6 @@ artifacts:
   notebooks:
     files:
       - source: DataPlatform/**/*.py
-exclude:
-  - resources/SharedObjects/sql_warehouses.yml
 
 targets:
   dev:
