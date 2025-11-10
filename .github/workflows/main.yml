@@ -67,8 +67,8 @@ jobs:
           echo "DATABRICKS_HOST: $env:DATABRICKS_HOST"
           echo "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
           
-          # Run the prerequisites script
-          python .github/workflows/prerequisites.py
+          # # Run the prerequisites script
+          # python .github/workflows/prerequisites.py
           
           # Check if files were created
           echo "Checking generated files:"
