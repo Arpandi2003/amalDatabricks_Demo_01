@@ -5,7 +5,7 @@ resources:
       tasks:
         - task_key: NB_Osaic_Dev_Extraction_DataLoad
           notebook_task:
-            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+            notebook_path: ../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
             source: WORKSPACE
           min_retry_interval_millis: 900000
           timeout_seconds: 2400
@@ -25,7 +25,7 @@ resources:
           depends_on:
             - task_key: NB_Osaic_Dev_Extraction_DataLoad
           notebook_task:
-            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Movement.py
+            notebook_path: ../DataPlatform/Extraction/NB_FlatFile_Movement.py
             base_parameters:
               SubjectArea: Osaic
             source: WORKSPACE
