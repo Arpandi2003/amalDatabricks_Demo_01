@@ -151,7 +151,8 @@ jobs:
           
           databricks --version
           databricks bundle install
-          databricks bundle deploy --target dev
+          databricks bundle validate --target dev
+          
           
           echo "✅ Deployment completed successfully!"
   
