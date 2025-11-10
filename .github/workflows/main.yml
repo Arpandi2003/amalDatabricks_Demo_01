@@ -158,7 +158,7 @@ jobs:
   # Optional: Add a validation step
   validate-deployment:
     runs-on: windows-latest
-    needs: deploy-notebooks
+    needs: run-prerequisites
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
