@@ -367,7 +367,7 @@ def main():
     ddl_dir = "./AMALDAB/resources/uc_ddl"
 
     # ===== 1. INFRASTRUCTURE =====
-    print("\n📥 Fetching infrastructure...")
+    print("\n Fetching infrastructure...")
     clusters = get_all_clusters()
     policies = get_cluster_policies()
     warehouses = get_sql_warehouses()
