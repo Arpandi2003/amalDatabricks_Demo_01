@@ -381,7 +381,7 @@ def main():
     print(f"   • SQL Warehouses: {len(warehouses)}")
     print(f"   • Storage Credentials: {len(scs)}")
     print(f"   • External Locations: {len(els)}")
-    print(f"   • Jobs: {len(jobs)}")
+    # print(f"   • Jobs: {len(jobs)}")
     print(f"   • Connections (sanitized): {len(connections)}")
 
     resources = {}
