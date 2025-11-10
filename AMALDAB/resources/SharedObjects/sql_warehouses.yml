@@ -2,7 +2,7 @@
 resources:
   sql_warehouses:
     sql-warehouse_01:
-      name: SQL Warehouse
+      name: SQL Warehouse 01
       cluster_size: 2X-Small
       min_num_clusters: 1
       max_num_clusters: 1
@@ -15,7 +15,7 @@ resources:
       warehouse_type: PRO
       
     ds-oct-batch-2025-sqlwarhouse_01:
-      name: DS_OCT_BATCH_2025_SqlWarhouse
+      name: DS_OCT_BATCH_2025_SqlWarhouse 01
       cluster_size: 2X-Small
       min_num_clusters: 1
       max_num_clusters: 1
