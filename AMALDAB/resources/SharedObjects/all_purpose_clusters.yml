@@ -23,7 +23,7 @@ resources:
       data_security_mode: USER_ISOLATION
       runtime_engine: STANDARD
     sept-batch-trainee-compute:
-      cluster_name: Sept_Batch_Trainee_Compute
+      cluster_name: Sept-Batch-Trainee-Compute
       spark_version: 16.4.x-scala2.12
       node_type_id: Standard_DS3_v2
       driver_node_type_id: Standard_DS3_v2
@@ -40,8 +40,8 @@ resources:
       policy_id: 60643F56F1008808
       data_security_mode: USER_ISOLATION
       runtime_engine: STANDARD
-    vijayaramuprawin's-cluster:
-      cluster_name: Vijayaramuprawin's Cluster
+    vijayaramuprawins-cluster:
+      cluster_name: Vijayaramuprawins-Cluster
       spark_version: 16.4.x-scala2.13
       node_type_id: Standard_DS3_v2
       driver_node_type_id: Standard_DS3_v2

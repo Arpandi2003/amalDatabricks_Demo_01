@@ -1,0 +1,75 @@
+resources:
+  connections:
+    avatest-mysql:
+      name: avatest_mysql
+      connection_type: MYSQL
+      options:
+        host: 172.214.42.147
+        port: '3306'
+        trustServerCertificate: 'true'
+    dpn:
+      name: dpn
+      connection_type: SQLSERVER
+      options:
+        host: 172.214.42.147
+        port: '1433'
+        trustServerCertificate: 'true'
+    internal-09fb8d6a-fee5-4a47-a5f3-9529537fe0ab:
+      name: internal-09fb8d6a-fee5-4a47-a5f3-9529537fe0ab
+      connection_type: MANAGED_POSTGRESQL
+      options: {}
+    lakeflow-connect-sql:
+      name: lakeflow-connect-sql
+      connection_type: SQLSERVER
+      options:
+        applicationIntent: ReadOnly
+        host: 172.178.88.79
+        port: '1433'
+        trustServerCertificate: 'true'
+    managed-database-catalog-09f39289-4c44-442b-88df-73acb841b111:
+      name: managed-database-catalog-09f39289-4c44-442b-88df-73acb841b111
+      connection_type: MANAGED_POSTGRESQL
+      options: {}
+    managed-database-catalog-57125cc2-fddc-424a-bfb1-a30c62341fc5:
+      name: managed-database-catalog-57125cc2-fddc-424a-bfb1-a30c62341fc5
+      connection_type: MANAGED_POSTGRESQL
+      options: {}
+    servicename-test:
+      name: servicename_test
+      connection_type: SERVICENOW
+      options:
+        client_id: fd82b65ec2b148778f75663aa6a3a56c
+        instance_id: dev328339
+    snowflake:
+      name: snowflake
+      connection_type: SNOWFLAKE
+      options:
+        host: webweyr-nt88400.snowflakecomputing.com
+        use_proxy: 'false'
+        port: '443'
+        sfWarehouse: DHARUN_WH
+    snowflake-test-connection:
+      name: snowflake-test-connection
+      connection_type: SALESFORCE
+      options:
+        access_token_expiration: '2025-05-02 08:40:58.057931423'
+        refresh_token_expiration: '2125-04-03 18:47:57.655226165'
+        instance_url: https://connect-data-7837.my.salesforce.com
+        oauth_redirect_uri: https://westus.azuredatabricks.net/api/2.0/ingestion/oauth/redirect
+        client_id: 3MVG9KI2HHAq33Rwnj.ZPsz8HLaAPEe4w38p10IdZDoDR8TN8.vWb3QPl4jzgX891MahfuvveX45CBA_Zo0nI
+        oauth_scope: api refresh_token
+        is_sandbox: 'false'
+    sqlserver-test:
+      name: sqlserver-test
+      connection_type: SQLSERVER
+      options:
+        host: ava-eus-ds-training-sqlserver.database.windows.net
+        port: '1433'
+        trustServerCertificate: 'false'
+    wtech:
+      name: wtech
+      connection_type: MYSQL
+      options:
+        host: 172.214.42.147
+        port: '3306'
+        trustServerCertificate: 'true'
