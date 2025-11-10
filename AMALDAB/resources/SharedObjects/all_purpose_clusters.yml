@@ -1,0 +1,38 @@
+resources:
+  clusters:
+    ava-eus-ds-genetl:
+      autotermination_minutes: 15
+      azure_attributes:
+        availability: ON_DEMAND_AZURE
+        first_on_demand: 1
+        spot_bid_max_price: -1.0
+      cluster_name: AVA-EUS-DS-GenETL
+      custom_tags:
+        Domain: DS
+        Purpose: GenETL
+        Ticket: '7673'
+        x_Owner: Dharun
+      node_type_id: Standard_DS3_v2
+      spark_version: 16.4.x-scala2.12
+    sept-batch-trainee-compute:
+      autotermination_minutes: 10
+      azure_attributes:
+        availability: ON_DEMAND_AZURE
+        first_on_demand: 1
+        spot_bid_max_price: -1.0
+      cluster_name: Sept_Batch_Trainee_Compute
+      node_type_id: Standard_DS3_v2
+      policy_id: 60643F56F1008808
+      spark_version: 16.4.x-scala2.12
+    vijayaramuprawin's-cluster:
+      autotermination_minutes: 30
+      azure_attributes:
+        availability: ON_DEMAND_AZURE
+        first_on_demand: 1
+        spot_bid_max_price: -1.0
+      cluster_name: Vijayaramuprawin's Cluster
+      custom_tags:
+        ResourceClass: SingleNode
+      node_type_id: Standard_DS3_v2
+      policy_id: 60640816D00056D6
+      spark_version: 16.4.x-scala2.13

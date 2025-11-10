@@ -1,0 +1,26 @@
+resources:
+  sql_warehouses:
+    ds-oct-batch-2025-sqlwarhouse:
+      auto_stop_mins: 10
+      channel:
+        name: CHANNEL_NAME_CURRENT
+      cluster_size: 2X-Small
+      enable_serverless_compute: true
+      max_num_clusters: 1
+      min_num_clusters: 1
+      name: DS_OCT_BATCH_2025_SqlWarhouse
+      spot_instance_policy: COST_OPTIMIZED
+      tags: {}
+      warehouse_type: PRO
+    sql-warehouse:
+      auto_stop_mins: 10
+      channel:
+        name: CHANNEL_NAME_CURRENT
+      cluster_size: 2X-Small
+      enable_serverless_compute: true
+      max_num_clusters: 1
+      min_num_clusters: 1
+      name: SQL Warehouse
+      spot_instance_policy: COST_OPTIMIZED
+      tags: {}
+      warehouse_type: PRO
