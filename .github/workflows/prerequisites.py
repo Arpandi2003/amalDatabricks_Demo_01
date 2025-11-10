@@ -387,6 +387,8 @@ def main():
     resources = {}
 
     if clusters:
+        for cluster in clusters:
+            cluster['cluster_name'] = cluster['cluster_name'].replace(" ", "-").replace("_", "-").replace(".", "-").replace("@", "-at-").replace("'",'')
         resources["clusters"] = {convert_cluster(c)[0]: convert_cluster(c)[1] for c in clusters}
         safe_write_yml(f"{base_dir}/all_purpose_clusters.yml", {"resources": {"clusters": resources["clusters"]}})
 
@@ -475,3 +477,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# COMMAND ----------
+
+for cluster in clusters:
+    cluster['cluster_name'] = cluster['cluster_name'].replace(" ", "-").replace("_", "-").replace(".", "-").replace("@", "-at-").replace("'",'')
+    print(cluster)
