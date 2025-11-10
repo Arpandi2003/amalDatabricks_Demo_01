@@ -112,16 +112,16 @@ def get_external_locations() -> List[Dict]:
     data = api_get(url)
     return data.get("external_locations", [])
 
-def get_jobs() -> List[Dict]:
-    url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100"
-    data = api_get(url)
-    jobs = data.get("jobs", [])
-    # Paginate if needed
-    while data.get("has_more"):
-        offset = data["limit"] + data.get("offset", 0)
-        data = api_get(f"{url}&offset={offset}")
-        jobs.extend(data.get("jobs", []))
-    return jobs
+# def get_jobs() -> List[Dict]:
+#     url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100"
+#     data = api_get(url)
+#     jobs = data.get("jobs", [])
+#     # Paginate if needed
+#     while data.get("has_more"):
+#         offset = data["limit"] + data.get("offset", 0)
+#         data = api_get(f"{url}&offset={offset}")
+#         jobs.extend(data.get("jobs", []))
+#     return jobs
 
 def get_connections() -> List[Dict]:
     # Note: Connections API is /2.0/, NOT /2.1/unity-catalog/
@@ -373,7 +373,7 @@ def main():
     warehouses = get_sql_warehouses()
     scs = get_storage_credentials()
     els = get_external_locations()
-    jobs = get_jobs()
+    # jobs = get_jobs()
     connections = get_connections()
 
     print(f"   • Clusters: {len(clusters)}")
@@ -408,9 +408,9 @@ def main():
         resources["external_locations"] = {convert_el(el)[0]: convert_el(el)[1] for el in els}
         safe_write_yml(f"{base_dir}/external_locations.yml", {"resources": {"external_locations": resources["external_locations"]}})
 
-    if jobs:
-        resources["jobs"] = {convert_job(j)[0]: convert_job(j)[1] for j in jobs}
-        safe_write_yml(f"{base_dir}/jobs.yml", {"resources": {"jobs": resources["jobs"]}})
+    # if jobs:
+    #     resources["jobs"] = {convert_job(j)[0]: convert_job(j)[1] for j in jobs}
+    #     safe_write_yml(f"{base_dir}/jobs.yml", {"resources": {"jobs": resources["jobs"]}})
 
     if connections:
         resources["connections"] = {convert_connection(c)[0]: convert_connection(c)[1] for c in connections}
