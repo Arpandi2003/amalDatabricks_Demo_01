@@ -12,6 +12,8 @@ resources:
       channel:
         name: CHANNEL_NAME_CURRENT
       warehouse_type: PRO
+      lookup_existing:
+        - name: sql_warehouses
     ds-oct-batch-2025-sqlwarhouse:
       name: DS_OCT_BATCH_2025_SqlWarhouse
       cluster_size: 2X-Small
@@ -24,3 +26,5 @@ resources:
       channel:
         name: CHANNEL_NAME_CURRENT
       warehouse_type: PRO
+      lookup_existing:
+        - name: DS_OCT_BATCH_2025_SqlWarhouse
