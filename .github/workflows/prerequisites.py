@@ -477,9 +477,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# COMMAND ----------
-
-for cluster in clusters:
-    cluster['cluster_name'] = cluster['cluster_name'].replace(" ", "-").replace("_", "-").replace(".", "-").replace("@", "-at-").replace("'",'')
-    print(cluster)
