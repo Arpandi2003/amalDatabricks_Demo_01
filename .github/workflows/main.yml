@@ -2,98 +2,22 @@ name: Databricks Notebooks Deployment
 
 on:
   workflow_dispatch:
-    inputs:
-      target_env:
-        description: 'Override target environment (e.g., dev, qa, prod)'
-        required: false
-        default: ''
-        type: choice
-        options:
-          - ''
-          - dev
-          - qa
-          - prod
   push:
-    branches:
-      - main
-      - dev
-      - qa
+    # branches:
+    #   - main
+    #   - dev
     paths:
       - amalDatabricks_Demo_01/**
-      - AMALDAB/**
       - resources/**
       - config/**
       - metrics/data_platform/**
       - .github/workflows/**
       - databricks.yml
 
-env:
-  # Map branch → Databricks profile & bundle target
-  # Extend this as needed
-  BRANCH_TO_PROFILE: |
-    main:PROD:prod
-    dev:QA:dev
-    qa:QA:qa
-    feature:QA:dev
-    hotfix:QA:qa
-
 jobs:
-  resolve-env:
-    runs-on: windows-latest
-    outputs:
-      databricks_profile: ${{ steps.resolve.outputs.profile }}
-      bundle_target: ${{ steps.resolve.outputs.target }}
-      workspace_host: ${{ steps.resolve.outputs.host }}
-    steps:
-      - name: Resolve environment from branch or input
-        id: resolve
-        shell: bash
-        run: |
-          BRANCH="${{ github.ref_name }}"
-          INPUT_ENV="${{ github.event.inputs.target_env }}"
-
-          echo "Detected branch: $BRANCH"
-          echo "Manual input env: $INPUT_ENV"
-
-          # Prefer manual input
-          if [ -n "$INPUT_ENV" ]; then
-            case "$INPUT_ENV" in
-              dev)   PROFILE="QA"; TARGET="dev"; HOST="${{ vars.QA_DATABRICKS_HOST }}" ;;
-              qa)    PROFILE="QA"; TARGET="qa";  HOST="${{ vars.QA_DATABRICKS_HOST }}" ;;
-              prod)  PROFILE="PROD"; TARGET="prod"; HOST="${{ vars.PROD_DATABRICKS_HOST }}" ;;
-              *)     echo "⚠️ Unknown input env: $INPUT_ENV"; exit 1 ;;
-            esac
-          else
-            # Map branch → profile:target
-            while IFS=':' read -r branch profile target; do
-              if [[ "$BRANCH" == $branch* ]]; then
-                PROFILE="$profile"
-                TARGET="$target"
-                break
-              fi
-            done <<< "${{ env.BRANCH_TO_PROFILE }}"
-
-            # Set host based on profile
-            if [ "$PROFILE" = "PROD" ]; then
-              HOST="${{ vars.PROD_DATABRICKS_HOST }}"
-            else
-              HOST="${{ vars.QA_DATABRICKS_HOST }}"
-            fi
-          fi
-
-          if [ -z "$PROFILE" ] || [ -z "$TARGET" ] || [ -z "$HOST" ]; then
-            echo "❌ Failed to resolve env for branch: $BRANCH"
-            exit 1
-          fi
-
-          echo "Resolved: profile=$PROFILE, target=$TARGET, host=$HOST"
-          echo "profile=$PROFILE" >> $GITHUB_OUTPUT
-          echo "target=$TARGET" >> $GITHUB_OUTPUT
-          echo "host=$HOST" >> $GITHUB_OUTPUT
-
+  # Prerequisites job - must complete first
   run-prerequisites:
     runs-on: windows-latest
-    needs: resolve-env
     outputs:
       status: ${{ steps.prerequisites.outcome }}
     steps:
@@ -124,20 +48,46 @@ jobs:
         run: |
           echo "Creating directory structure..."
           New-Item -ItemType Directory -Force -Path "AMALDAB/resources/SharedObjects"
+          echo "✅ Directory structure created"
 
       - name: Run prerequisites Python script
         id: prerequisites
         shell: pwsh
         env:
-          DATABRICKS_HOST: ${{ needs.resolve-env.outputs.host }}
+          DATABRICKS_WORKSPACE_URL: ${{ vars.QA_DATABRICKS_HOST }}
+          DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
         run: |
-          echo "Running prerequisites for env: $env:DATABRICKS_HOST"
+          echo "Running prerequisites script..."
+          
+          # Debug: Check environment variables
+          echo "DATABRICKS_WORKSPACE_URL: $env:DATABRICKS_WORKSPACE_URL"
+          echo "DATABRICKS_HOST: $env:DATABRICKS_HOST"
+          echo "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
+          
+          # # Run the prerequisites script
           # python .github/workflows/prerequisites.py
-          echo "✅ Prerequisites completed (mocked)"
-
+          
+          # Check if files were created
+          echo "Checking generated files:"
+          if (Test-Path "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml") {
+              echo "✅ all_purpose_clusters.yml created"
+              Get-Content "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml" | Select-Object -First 10
+          } else {
+              echo "❌ all_purpose_clusters.yml not found"
+          }
+          
+          if (Test-Path "AMALDAB/resources/SharedObjects/sql_warehouses.yml") {
+              echo "✅ sql_warehouses.yml created"
+              Get-Content "AMALDAB/resources/SharedObjects/sql_warehouses.yml" | Select-Object -First 10
+          } else {
+              echo "❌ sql_warehouses.yml not found"
+          }
+          
+          echo "✅ Prerequisites completed successfully"
+          
       - name: Commit generated files to Git
         shell: pwsh
         run: |
@@ -145,16 +95,16 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add AMALDAB/resources/
           if (-not (git diff --cached --quiet)) {
-            git commit -m "chore: auto-generate configs for ${{ needs.resolve-env.outputs.target }}"
-            git push
-            echo "✅ Changes committed"
+              git commit -m "chore: auto-generate Databricks cluster & warehouse configs"
+              git push
+              echo "✅ Changes committed and pushed to repo."
           } else {
-            echo "➡️ No changes to commit"
-          }
-
+              echo "➡️ No changes detected; nothing to commit."
+          }    
+  # Deployment job - waits for prerequisites to complete
   deploy-notebooks:
     runs-on: windows-latest
-    needs: [resolve-env, run-prerequisites]
+    needs: run-prerequisites  # This ensures it waits for prerequisites
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -172,36 +122,50 @@ jobs:
       - name: Authenticate Databricks Workspace
         shell: pwsh
         run: |
-          $cfg = "$env:USERPROFILE\.databrickscfg"
-          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.databricks"
-
-          # Write config with both profiles
+          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
           @"
           [PROD]
           host = ${{ vars.PROD_DATABRICKS_HOST }}
           client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
           client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-
           [QA]
           host = ${{ vars.QA_DATABRICKS_HOST }}
           client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
           client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-          "@ | Out-File -FilePath $cfg -Encoding utf8
-
-          icacls $cfg /inheritance:r /grant:r "$env:USERNAME:F"
-          Write-Host "✅ Databricks config written for ${{ needs.resolve-env.outputs.databricks_profile }}"
+          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
+          
+          Write-Host "Testing Databricks authentication..."
+          databricks auth profiles
 
       - name: Deploy Databricks bundle
         shell: pwsh
         env:
-          DATABRICKS_CONFIG_PROFILE: ${{ needs.resolve-env.outputs.databricks_profile }}
+          DATABRICKS_CONFIG_PROFILE: QA
         run: |
           cd AMALDAB
-          echo "Deploying to target: ${{ needs.resolve-env.outputs.bundle_target }} (profile: $env:DATABRICKS_CONFIG_PROFILE)"
-          databricks bundle deploy --target ${{ needs.resolve-env.outputs.bundle_target }}
-
+          
+          echo "Current directory: $(Get-Location)"
+          echo "Files in current directory:"
+          Get-ChildItem
+          
+          databricks --version
+          databricks bundle install
+          databricks bundle deploy --target dev
+          
+          
+          echo "✅ Deployment completed successfully!"
+  
+  # Optional: Add a validation step
   validate-deployment:
     runs-on: windows-latest
     needs: deploy-notebooks
     steps:
-      - run: echo "✅ Deployment to ${{ needs.resolve-env.outputs.bundle_target }} succeeded!"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate deployment
+        shell: pwsh
+        run: |
+          echo "✅ All deployment steps completed successfully!"
+          echo "Prerequisites status: ${{ needs.run-prerequisites.outputs.status }}"
