@@ -8,6 +8,10 @@ include:
   - config/*.yml
   - resources/*.yml
 
+sync:
+  exclude:
+    - resources/SharedObjects/*.yml
+
 artifacts:
   notebooks:
     files:
