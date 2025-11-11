@@ -3,10 +3,10 @@ bundle:
   name: amaldatabricks
   uuid: 98bee946-7642-4fd2-beb9-d89c27ed0c2c
   
-include:
-  - resources/**/*.yml
-  - config/*.yml
-  - resources/*.yml
+# include:
+#   - resources/**/*.yml
+#   - config/*.yml
+#   - resources/*.yml
 
 sync:
   exclude:
