@@ -27,7 +27,7 @@ def get_databricks_instance() -> str:
     #     os.getenv("DATABRICKS_URL") or ""
     # ).strip()
     parser = argparse.ArgumentParser()
-    instance = parser.add_argument("DATABRICKS_HOST",required = True)
+    instance = parser.add_argument("DATABRICKS_HOST")
     if not instance:
         raise ValueError("Databricks URL not set. Set DATABRICKS_HOST or DATABRICKS_WORKSPACE_URL.")
     if not instance.startswith(("https://", "http://")):
@@ -44,7 +44,7 @@ def get_databricks_token() -> str:
     # ).strip()
     
     parser = argparse.ArgumentParser()
-    token = parser.add_argument("DATABRICKS_TOKEN",required = True)
+    token = parser.add_argument("DATABRICKS_TOKEN")
     
     if not token:
         raise ValueError("Databricks token missing. Set DATABRICKS_TOKEN.")
