@@ -140,15 +140,19 @@ jobs:
         run: |
           Write-Host "Running prerequisites.py for $env:ENV_NAME..."
 
-          # Optional: inject host/token for legacy PAT-based scripts (if needed)
-          $env:DATABRICKS_HOST = switch ($env:ENV_NAME) {
-            "PROD" { "${{ vars.PROD_DATABRICKS_HOST }}" }
-            "QA"   { "${{ vars.QA_DATABRICKS_HOST }}" }
-            default { "${{ vars.QA_DATABRICKS_HOST }}" }
+          # Resolve host based on ENV_NAME
+          $databricksHost = switch ($env:ENV_NAME) {
+              "PROD" { "${{ vars.PROD_DATABRICKS_HOST }}" }
+              "QA"   { "${{ vars.QA_DATABRICKS_HOST }}" }
+              default { "${{ vars.QA_DATABRICKS_HOST }}" }  # e.g., DEV → QA host (or use vars.DEV_DATABRICKS_HOST)
           }
-          $env:DATABRICKS_TOKEN = "${{ secrets.DATABRICKS_TOKEN }}"  # fallback only
-
-          python .github/workflows/prerequisites.py
+          
+          $databricksToken = "${{ secrets.DATABRICKS_TOKEN }}"
+          
+          # Run script with CLI args
+          python .github/workflows/prerequisites.py `
+              --databricks-host "$databricksHost" `
+              --databricks-token "$databricksToken"
 
           # Verify outputs
           $files = @(
