@@ -79,9 +79,9 @@ jobs:
           Write-Host "DATABRICKS_HOST: $env:DATABRICKS_HOST"
           Write-Host "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
           
-          python .github/workflows/prerequisites.py `
-            --DATABRICKS_HOST "$env:DATABRICKS_HOST" `
-            --DATABRICKS_TOKEN "$env:DATABRICKS_TOKEN"
+          # python .github/workflows/prerequisites.py `
+          #   --DATABRICKS_HOST "$env:DATABRICKS_HOST" `
+          #   --DATABRICKS_TOKEN "$env:DATABRICKS_TOKEN"
           
           # Verify outputs
           $clusterFile = "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml"
@@ -162,7 +162,7 @@ jobs:
         run: |
           # Ensure config directory
           $cfgPath = "$env:USERPROFILE\.databrickscfg"
-          $profileName = $env:ENV_NAME.ToLower()
+          $profileName = $env:ENV_NAME
           
           @"
           [$profileName]
@@ -197,7 +197,7 @@ jobs:
 
           # Install & deploy
           & $cliPath bundle install
-          & $cliPath bundle deploy --target $env:ENV_NAME.ToLower()
+          & $cliPath bundle deploy --target $env:ENV_NAME
 
           Write-Host "✅ Deployment completed successfully!"
   
