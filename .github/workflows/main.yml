@@ -35,6 +35,7 @@ jobs:
           
   run-prerequisites:
     runs-on: windows-latest
+    needs: UniTesting
     outputs:
       status: ${{ steps.prerequisites.outcome }}
     steps:
