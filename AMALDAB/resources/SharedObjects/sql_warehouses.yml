@@ -1,26 +1,26 @@
-resources:
-  sql_warehouses:
-    sql-warehouse:
-      name: SQL Warehouse
-      cluster_size: 2X-Small
-      min_num_clusters: 1
-      max_num_clusters: 1
-      auto_stop_mins: 10
-      enable_photon: true
-      enable_serverless_compute: true
-      spot_instance_policy: COST_OPTIMIZED
-      channel:
-        name: CHANNEL_NAME_CURRENT
-      warehouse_type: PRO
-    ds-oct-batch-2025-sqlwarhouse:
-      name: DS_OCT_BATCH_2025_SqlWarhouse
-      cluster_size: 2X-Small
-      min_num_clusters: 1
-      max_num_clusters: 1
-      auto_stop_mins: 10
-      enable_photon: true
-      enable_serverless_compute: true
-      spot_instance_policy: COST_OPTIMIZED
-      channel:
-        name: CHANNEL_NAME_CURRENT
-      warehouse_type: PRO
+# resources:
+#   sql_warehouses:
+#     sql-warehouse:
+#       name: SQL Warehouse
+#       cluster_size: 2X-Small
+#       min_num_clusters: 1
+#       max_num_clusters: 1
+#       auto_stop_mins: 10
+#       enable_photon: true
+#       enable_serverless_compute: true
+#       spot_instance_policy: COST_OPTIMIZED
+#       channel:
+#         name: CHANNEL_NAME_CURRENT
+#       warehouse_type: PRO
+#     ds-oct-batch-2025-sqlwarhouse:
+#       name: DS_OCT_BATCH_2025_SqlWarhouse
+#       cluster_size: 2X-Small
+#       min_num_clusters: 1
+#       max_num_clusters: 1
+#       auto_stop_mins: 10
+#       enable_photon: true
+#       enable_serverless_compute: true
+#       spot_instance_policy: COST_OPTIMIZED
+#       channel:
+#         name: CHANNEL_NAME_CURRENT
+#       warehouse_type: PRO
