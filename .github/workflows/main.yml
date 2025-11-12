@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # token: ${{ secrets.GIT_TOKEN }} #has this since using an external bot for commit
+          token: ${{ secrets.GIT_TOKEN} #has this since using an external bot for commit
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -49,46 +49,61 @@ jobs:
           echo "Creating directory structure..."
           New-Item -ItemType Directory -Force -Path "AMALDAB/resources/SharedObjects"
           echo "✅ Directory structure created"
+          
+      - name: Determine target environment
+        id: set-env
+        shell: pwsh
+        run: |
+          $branch = "${{ github.ref }}"
+          $envName = switch ($branch) {
+            "refs/heads/main" { "PROD" }
+            "refs/heads/qa"   { "QA" }
+            "refs/heads/dev"  { "DEV" }
+            default           { "DEV" }
+          }
+          
+          echo "ENV_NAME=$envName" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "env_name=$envName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "::notice::🎯 Target environment: $envName"
 
       - name: Run prerequisites Python script
         id: prerequisites
         shell: pwsh
         env:
-          DATABRICKS_WORKSPACE_URL: ${{ vars.QA_DATABRICKS_HOST }}
-          DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-          DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
-          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+          DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
+          DATABRICKS_TOKEN: ${{ secrets[format('{0}_DATABRICKS_TOKEN', env.ENV_NAME)] }}
+          # Optional: client_id/secret if needed by script
+          # DATABRICKS_CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', env.ENV_NAME)] }}
+          # DATABRICKS_CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', env.ENV_NAME)] }}
         run: |
-          echo "Running prerequisites script..."
+          Write-Host "DATABRICKS_HOST: $env:DATABRICKS_HOST"
+          Write-Host "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
           
-          # Debug: Check environment variables
-          echo "DATABRICKS_WORKSPACE_URL: $env:DATABRICKS_WORKSPACE_URL"
-          echo "DATABRICKS_HOST: $env:DATABRICKS_HOST"
-          echo "DATABRICKS_TOKEN length: $($env:DATABRICKS_TOKEN.Length)"
-          
-          # # Run the prerequisites script
           python .github/workflows/prerequisites.py `
-                  --DATABRICKS_HOST "$env:DATABRICKS_HOST" `
-                  --DATABRICKS_TOKEN "$env:DATABRICKS_TOKEN"
+            --DATABRICKS_HOST "$env:DATABRICKS_HOST" `
+            --DATABRICKS_TOKEN "$env:DATABRICKS_TOKEN"
           
-          # Check if files were created
-          echo "Checking generated files:"
-          if (Test-Path "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml") {
-              echo "✅ all_purpose_clusters.yml created"
-              Get-Content "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml" | Select-Object -First 10
+          # Verify outputs
+          $clusterFile = "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml"
+          $warehouseFile = "AMALDAB/resources/SharedObjects/sql_warehouses.yml"
+          
+          if (Test-Path $clusterFile) {
+            Write-Host "✅ $clusterFile created"
+            Get-Content $clusterFile | Select-Object -First 5
           } else {
-              echo "❌ all_purpose_clusters.yml not found"
+            Write-Error "❌ $clusterFile not found"
+            exit 1
           }
           
-          if (Test-Path "AMALDAB/resources/SharedObjects/sql_warehouses.yml") {
-              echo "✅ sql_warehouses.yml created"
-              Get-Content "AMALDAB/resources/SharedObjects/sql_warehouses.yml" | Select-Object -First 10
+          if (Test-Path $warehouseFile) {
+            Write-Host "✅ $warehouseFile created"
+            Get-Content $warehouseFile | Select-Object -First 5
           } else {
-              echo "❌ sql_warehouses.yml not found"
+            Write-Error "❌ $warehouseFile not found"
+            exit 1
           }
           
-          echo "✅ Prerequisites completed successfully"
+          Write-Host "✅ Prerequisites completed successfully"
           
       - name: Commit generated files to Git
         shell: pwsh
@@ -121,42 +136,75 @@ jobs:
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
           choco install databricks-cli -y
 
-      - name: Authenticate Databricks Workspace
+      - name: Determine target environment (again for this job)
+        id: set-env
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
-          @"
-          [PROD]
-          host = ${{ vars.PROD_DATABRICKS_HOST }}
-          client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
-          client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-          [QA]
-          host = ${{ vars.QA_DATABRICKS_HOST }}
-          client_id = ${{ vars.DATABRICKS_CLIENT_ID }}
-          client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
+          $branch = "${{ github.ref }}"
+          $envName = switch ($branch) {
+            "refs/heads/main" { "PROD" }
+            "refs/heads/qa"   { "QA" }
+            "refs/heads/dev"  { "DEV" }
+            default           { "DEV" }
+          }
+          echo "ENV_NAME=$envName" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "env_name=$envName" >> $env:GITHUB_OUTPUT
+          Write-Host "::notice::🎯 Target environment: $envName"
+
+      - name: Authenticate Databricks Workspace
+        shell: pwsh
+        env:
+          DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', steps.set-env.outputs.env_name)] }}
+          DATABRICKS_TOKEN: ${{ secrets[format('{0}_DATABRICKS_TOKEN', steps.set-env.outputs.env_name)] }}
+          DATABRICKS_CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', steps.set-env.outputs.env_name)] }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', steps.set-env.outputs.env_name)] }}
           
-          Write-Host "Testing Databricks authentication..."
+        run: |
+          # Ensure config directory
+          $cfgPath = "$env:USERPROFILE\.databrickscfg"
+          $profileName = $env:ENV_NAME.ToLower()
+          
+          @"
+          [$profileName]
+          host = $env:DATABRICKS_HOST
+          token = $env:DATABRICKS_TOKEN
+          "client_id = $env:DATABRICKS_CLIENT_ID
+          client_secret = $env:DATABRICKS_CLIENT_SECRET
+          "@ -replace 'client_id = \s*\n', '' `  # Remove client lines if empty
+            -replace 'client_secret = \s*\n', '' |
+            Set-Content -Path $cfgPath -Encoding utf8
+          
+          icacls $cfgPath /inheritance:r /grant:r "$env:USERNAME:F" | Out-Null
+
+          Write-Host "Testing Databricks authentication for profile: $profileName"
+          
+          databricks --profile $profileName workspace list --page-size 1
+          
           databricks auth profiles
 
       - name: Deploy Databricks bundle
         shell: pwsh
+        working-directory: ./AMALDAB
         env:
-          DATABRICKS_CONFIG_PROFILE: QA
+          DATABRICKS_CONFIG_PROFILE: ${{ env.ENV_NAME }}  # ✅ Now set via github-env
         run: |
-          cd AMALDAB
-          
-          echo "Current directory: $(Get-Location)"
-          echo "Files in current directory:"
-          Get-ChildItem
-          
-          databricks --version
-          databricks bundle install
-          databricks bundle deploy --target dev
-          
-          
-          echo "✅ Deployment completed successfully!"
+          Write-Host "Deploying bundle to target: $env:ENV_NAME"
+          Write-Host "Current directory: $(Get-Location)"
+          Get-ChildItem | Out-Host
+
+          # Verify CLI
+          $cliPath = (Get-Command databricks -ErrorAction SilentlyContinue)?.Source
+          if (-not $cliPath) {
+            Write-Error "Databricks CLI not found in PATH"
+            exit 1
+          }
+          & $cliPath --version
+
+          # Install & deploy
+          & $cliPath bundle install
+          & $cliPath bundle deploy --target $env:ENV_NAME.ToLower()  # ✅ Correct PowerShell var
+
+          Write-Host "✅ Deployment completed successfully!"
   
   # Optional: Add a validation step
   validate-deployment:
