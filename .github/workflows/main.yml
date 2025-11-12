@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GIT_TOKEN} #has this since using an external bot for commit
+          token: ${{ secrets.GIT_TOKEN}} #has this since using an external bot for commit
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -168,18 +168,13 @@ jobs:
           [$profileName]
           host = $env:DATABRICKS_HOST
           token = $env:DATABRICKS_TOKEN
-          "client_id = $env:DATABRICKS_CLIENT_ID
+          client_id = $env:DATABRICKS_CLIENT_ID
           client_secret = $env:DATABRICKS_CLIENT_SECRET
-          "@ -replace 'client_id = \s*\n', '' `  # Remove client lines if empty
-            -replace 'client_secret = \s*\n', '' |
-            Set-Content -Path $cfgPath -Encoding utf8
+          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME`:F"
           
-          icacls $cfgPath /inheritance:r /grant:r "$env:USERNAME:F" | Out-Null
-
           Write-Host "Testing Databricks authentication for profile: $profileName"
-          
           databricks --profile $profileName workspace list --page-size 1
-          
           databricks auth profiles
 
       - name: Deploy Databricks bundle
@@ -202,7 +197,7 @@ jobs:
 
           # Install & deploy
           & $cliPath bundle install
-          & $cliPath bundle deploy --target $env:ENV_NAME.ToLower()  # ✅ Correct PowerShell var
+          & $cliPath bundle deploy --target $env:ENV_NAME  
 
           Write-Host "✅ Deployment completed successfully!"
   
