@@ -48,9 +48,9 @@ jobs:
           $branch = "${{ github.ref }}"
           $envName = switch ($branch) {
             "refs/heads/main" { "PROD" }
-            "refs/heads/qa"   { "UAT" }
-            "refs/heads/dev"  { "UAT" }
-            default           { "UAT" }
+            "refs/heads/qa"   { "QA" }
+            "refs/heads/dev"  { "DEV" }
+            default           { "DEV" }
           }
           echo "ENV_NAME=$envName" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "env_name=$envName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -61,15 +61,22 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
           @"
-[UAT]
-host = "${{ vars.UAT_DATABRICKS_HOST }}"
-client_id = "${{ secrets.DATABRICKS_CLIENT_ID }}"
-client_secret = "${{ secrets.DATABRICKS_CLIENT_SECRET }}"
-[PROD]
-host = "${{ vars.PROD_DATABRICKS_HOST }}"
-client_id = "${{ secrets.PROD_DATABRICKS_CLIENT_ID }}"
-client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
-"@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          [DEV]
+          host = "${{ vars.QA_DATABRICKS_HOST }}"
+          client_id = "${{ secrets.DEV_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
+          
+          [QA]
+          host = "${{ vars.QA_DATABRICKS_HOST }}"
+          client_id = "${{ secrets.QA_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
+          
+          [PROD]
+          host = "${{ vars.PROD_DATABRICKS_HOST }}"
+          client_id = "${{ secrets.PROD_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
+          
+          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
           icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
           databricks auth profiles
           Write-Host "✅ .databrickscfg generated with UAT and PROD profiles"
@@ -87,7 +94,7 @@ client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
             "${{ vars.PROD_DATABRICKS_HOST }}" 
           } else { 
             "${{ vars.UAT_DATABRICKS_HOST }}" 
-          }
+          }  
           
           $databricksToken = "${{ secrets.DATABRICKS_TOKEN }}"
           
