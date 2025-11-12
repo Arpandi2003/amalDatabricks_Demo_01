@@ -36,12 +36,9 @@ jobs:
           pip install requests databricks-cli PyYAML
 
       - name: Install Databricks CLI
-        shell: pwsh
-        run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          choco install databricks-cli -y
+        uses: databricks/setup-cli@v1
+        with:
+          version: 'latest'
 
       - name: Create AMALDAB directory structure
         shell: pwsh
@@ -150,12 +147,9 @@ jobs:
           fetch-depth: 0
 
       - name: Install Databricks CLI
-        shell: pwsh
-        run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          choco install databricks-cli -y
+        uses: databricks/setup-cli@v1
+        with:
+          version: 'latest'
 
       - name: Generate Databricks config for deployment
         shell: pwsh
