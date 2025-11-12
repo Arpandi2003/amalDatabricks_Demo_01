@@ -167,7 +167,6 @@ jobs:
           @"
           [$profileName]
           host = $env:DATABRICKS_HOST
-          token = $env:DATABRICKS_TOKEN
           client_id = $env:DATABRICKS_CLIENT_ID
           client_secret = $env:DATABRICKS_CLIENT_SECRET
           "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
