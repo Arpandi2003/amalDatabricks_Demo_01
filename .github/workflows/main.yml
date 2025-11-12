@@ -6,13 +6,13 @@ on:
     # branches:
     #   - main
     #   - dev
-    paths:
-      - amalDatabricks_Demo_01/**
-      - resources/**
-      - config/**
-      - metrics/data_platform/**
-      - .github/workflows/**
-      - databricks.yml
+    # paths:
+    #   - amalDatabricks_Demo_01/**
+    #   - resources/**
+    #   - config/**
+    #   - metrics/data_platform/**
+    #   - .github/workflows/**
+    #   - databricks.yml
 
 jobs:
   # Prerequisites job - must complete first
@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GIT_TOKEN }}
+          # token: ${{ secrets.GIT_TOKEN }} #has this since using an external bot for commit
 
       - name: Set up Python
         uses: actions/setup-python@v4
