@@ -18,7 +18,7 @@ artifacts:
       - source: DataPlatform/**/*.py
 
 targets:
-  dev:
+  DEV:
     mode: production
     default: true
 
@@ -41,7 +41,7 @@ targets:
       - group_name: DataEngineering-Contractors
         level: CAN_MANAGE
 
-  qa:
+  QA:
     mode: production
 
     run_as:
@@ -71,7 +71,7 @@ targets:
       - group_name: DataEngineering-Contractors
         level: CAN_MANAGE
 
-  prod:
+  PROD:
     mode: production
 
     run_as:
