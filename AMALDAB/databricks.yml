@@ -27,6 +27,7 @@ targets:
 
     presets:
       source_linked_deployment: false
+      name_prefix: '[dev]'
       tags:
         amal_owner: DataEngineering
         Environment: Dev
