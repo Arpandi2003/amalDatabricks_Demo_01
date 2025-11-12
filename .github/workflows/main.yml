@@ -33,12 +33,22 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          pip install requests databricks-cli PyYAML
+          pip install requests PyYAML
+          # ✅ No databricks-cli — not needed
 
-      - name: Install Databricks CLI
-        uses: databricks/setup-cli@main
+      - name: Install Databricks CLI (Modern Go-based)
+        uses: databricks/setup-cli@v1
         with:
-          version: '0.276.0'
+          version: '0.276.0'  # ✅ Modern CLI — confirmed Go binary
+
+      - name: Verify CLI version (debug safeguard)
+        run: |
+          $version = databricks --version 2>&1
+          Write-Host "Databricks CLI version: $version"
+          if ($version -notmatch "v0\.276\.0") {
+            Write-Error "❌ Unexpected CLI version. Expected v0.276.0 (modern)."
+            exit 1
+          }
 
       - name: Create AMALDAB directory structure
         shell: pwsh
@@ -46,7 +56,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "AMALDAB/resources/SharedObjects"
           Write-Host "✅ Directory structure created"
 
-      - name: Determine environment
+      - name: Determine target environment
         id: set-env
         shell: pwsh
         run: |
@@ -59,78 +69,63 @@ jobs:
           }
           echo "ENV_NAME=$envName" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "env_name=$envName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "::notice::Target environment: $envName"
+          Write-Host "::notice::🎯 Target environment: $envName"
 
-      - name: Generate Databricks config file
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
-          @"
-          [DEV]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
-          
-          [QA]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
-          
-          [PROD]
-          host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
-          
-          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
-          databricks auth profiles
-          Write-Host "✅ .databrickscfg generated with UAT and PROD profiles"
-
-      - name: Run prerequisites Python script
+      - name: Inject Databricks credentials (modern CLI: env vars only)
+        # ✅ No config files. No `databrickscfg`. No `auth login`.
+        # ✅ Service Principal auth via env vars — secure & CI-friendly.
+        id: inject-creds
         shell: pwsh
         env:
-          ENV_NAME: ${{ env.ENV_NAME }}
-          DATABRICKS_CONFIG_PROFILE: ${{ env.ENV_NAME }}
+          HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
+          CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', env.ENV_NAME)] }}
+          CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', env.ENV_NAME)] }}
         run: |
-          Write-Host "Running prerequisites.py for $env:ENV_NAME..."
+          if (-not $env:HOST -or -not $env:CLIENT_ID -or -not $env:CLIENT_SECRET) {
+            Write-Error "❌ Missing Databricks credentials for $env:ENV_NAME"
+            Write-Host "Expected vars/secrets: ${env:ENV_NAME}_DATABRICKS_*"
+            exit 1
+          }
+          Write-Host "✅ Credentials set for $env:ENV_NAME"
+          Write-Host "HOST = $env:HOST"
+          # Mask secret in logs
+          Write-Host "::add-mask::$env:CLIENT_SECRET"
 
-          # Resolve host based on ENV_NAME
-          $databricksHost = if ($env:ENV_NAME -eq "PROD") { 
-            "${{ vars.PROD_DATABRICKS_HOST }}" 
-          } else { 
-            "${{ vars.UAT_DATABRICKS_HOST }}" 
-          }  
-          
-          $databricksToken = "${{ secrets.DATABRICKS_TOKEN }}"
-          
-          # Run script with CLI args
+      - name: Run prerequisites script (with explicit host/token if needed)
+        shell: pwsh
+        env:
+          DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', env.ENV_NAME)] }}
+          # Only if your script uses token auth (e.g., for workspace export)
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          Write-Host "▶️ Running prerequisites.py for $env:ENV_NAME..."
           python .github/workflows/prerequisites.py `
-            --DATABRICKS_HOST "$databricksHost" `
-            --DATABRICKS_TOKEN "$databricksToken"
+            --DATABRICKS_HOST "$env:DATABRICKS_HOST" `
+            --DATABRICKS_TOKEN "$env:DATABRICKS_TOKEN"
 
-          # Verify outputs
-          $files = @(
+          # Validate outputs
+          $required = @(
             "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml",
             "AMALDAB/resources/SharedObjects/sql_warehouses.yml"
           )
-          foreach ($f in $files) {
-            if (Test-Path $f) {
-              Write-Host "✅ $f generated"
-            } else {
-              Write-Host "::error::$f missing!"
+          foreach ($f in $required) {
+            if (-not (Test-Path $f)) {
+              Write-Error "❌ Required output missing: $f"
               exit 1
             }
+            Write-Host "✅ $f generated"
           }
 
       - name: Commit generated files (if changed)
         shell: pwsh
         run: |
           git add AMALDAB/resources/
-          $gitStatus = git status --porcelain
-          if ($gitStatus) {
+          if (git status --porcelain | Select-String -Pattern "AMALDAB/resources/") {
             git commit -m "chore(deploy): auto-generate configs for ${{ env.ENV_NAME }}"
             git push
-            Write-Host "✅ Pushed generated configs"
+            Write-Host "✅ Pushed updated configs"
           } else {
             Write-Host "➡️ No changes to commit"
           }
@@ -147,50 +142,55 @@ jobs:
           fetch-depth: 0
 
       - name: Install Databricks CLI
-        uses: databricks/setup-cli@main
+        uses: databricks/setup-cli@v1
         with:
           version: '0.276.0'
 
-      - name: Generate Databricks config for deployment
-        shell: pwsh
+      - name: Verify CLI version
         run: |
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
-          @"
-          [DEV]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
-          
-          [UAT]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
-          
-          [PROD]
-          host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
-          
-          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
-          databricks auth profiles
-          Write-Host "✅ .databrickscfg generated for deployment"
+          $v = databricks --version 2>&1
+          Write-Host "CLI: $v"
+          if ($v -notmatch "v0\.276\.0") { exit 1 }
 
-      - name: Deploy Databricks bundle
+      - name: Set Databricks credentials (modern env-based auth)
         shell: pwsh
         env:
-          DATABRICKS_CONFIG_PROFILE: ${{ needs.run-prerequisites.outputs.env_name }}
+          DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', env.ENV_NAME)] }}
+        run: |
+          if (-not $env:DATABRICKS_HOST) {
+            Write-Error "❌ DATABRICKS_HOST not set for $env:ENV_NAME"
+            exit 1
+          }
+          Write-Host "✅ Auth via env vars for $env:ENV_NAME"
+          Write-Host "Host: $env:DATABRICKS_HOST"
+
+      - name: ✅ Test authentication (modern CLI)
+        env:
+          DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', env.ENV_NAME)] }}
+        run: |
+          Write-Host "🔍 Verifying auth..."
+          # This will fail fast if credentials/host are invalid
+          databricks auth verify
+          Write-Host "✅ Authentication successful"
+
+          # Optional: list 1 cluster to confirm API works
+          $cluster = databricks clusters list --limit 1 --output JSON | ConvertFrom-Json
+          if ($cluster.clusters) {
+            Write-Host "✅ Connected. Sample cluster: $($cluster.clusters[0].cluster_name)"
+          }
+
+      - name: 🚀 Deploy Databricks bundle
+        env:
+          DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', env.ENV_NAME)] }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', env.ENV_NAME)] }}
         run: |
           cd AMALDAB
-          Write-Host "Deploying to target: $env:DATABRICKS_CONFIG_PROFILE"
-
-          # Test auth
-          databricks auth profiles
-          databricks clusters list --output JSON | ConvertFrom-Json | Select-Object -First 1
-          Write-Host "✅ Auth successful"
-
-          # Install & deploy
+          Write-Host "📦 Deploying bundle to $env:ENV_NAME..."
           databricks bundle install
           databricks bundle deploy
-
-          Write-Host "✅ Deployment completed for $env:DATABRICKS_CONFIG_PROFILE"
+          Write-Host "✅ Deployment succeeded for $env:ENV_NAME"
