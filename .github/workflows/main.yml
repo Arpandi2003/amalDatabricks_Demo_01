@@ -16,6 +16,23 @@ on:
 
 jobs:
   # Prerequisites job - must complete first
+  UniTesting:
+    runs-on: windows-latest
+    steps:
+      - name: Install PowerShell YAML module
+        shell: pwsh
+        run: |
+          # Install silently, no prompts
+          $ProgressPreference = 'SilentlyContinue'
+          Install-Module powershell-yaml -Force -Scope CurrentUser -AllowClobber
+
+      - name: Enforce bundle config policies (is_test, cluster names, env leaks)
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running bundle policy validator..."
+          .\.github\workflows\validate-bundle.ps1 -BundleDir "AMALDAB"
+          Write-Host "✅ Policy check passed."
+          
   run-prerequisites:
     runs-on: windows-latest
     outputs:
