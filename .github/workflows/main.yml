@@ -63,17 +63,17 @@ jobs:
           @"
           [DEV]
           host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ secrets.DEV_DATABRICKS_CLIENT_ID }}"
+          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
           client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
           
           [QA]
           host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ secrets.QA_DATABRICKS_CLIENT_ID }}"
+          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
           client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
           
           [PROD]
           host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ secrets.PROD_DATABRICKS_CLIENT_ID }}"
+          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
           client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
           
           "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
@@ -156,17 +156,17 @@ jobs:
           @"
           [DEV]
           host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ secrets.DEV_DATABRICKS_CLIENT_ID }}"
+          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
           client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
           
           [UAT]
           host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ secrets.QA_DATABRICKS_CLIENT_ID }}"
+          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
           client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
           
           [PROD]
           host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ secrets.PROD_DATABRICKS_CLIENT_ID }}"
+          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
           client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
           
           "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
