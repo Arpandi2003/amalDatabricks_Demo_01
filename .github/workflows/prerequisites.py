@@ -4,6 +4,9 @@
 # Databricks Disaster Recovery Backup Script
 # Extracts configuration-as-code for compute, UC metadata, and permissions.
 
+#known issue 
+    #Update get_databricks_token function to generate the access token for SP
+
 import os
 import requests
 import json
