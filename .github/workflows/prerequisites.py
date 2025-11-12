@@ -19,36 +19,49 @@ from typing import Any, Dict, List, Optional
 # 🛠️ CONFIGURATION & UTILITIES
 # ===================================================================
 
+import os
+import argparse
+import sys
+
 def get_databricks_instance() -> str:
-    """Get Databricks workspace URL from env vars."""
-    # instance = (
-    #     os.getenv("DATABRICKS_WORKSPACE_URL") or
-    #     os.getenv("DATABRICKS_HOST") or
-    #     os.getenv("DATABRICKS_URL") or ""
-    # ).strip()
+    """Get Databricks workspace URL from CLI args or env vars (CLI args take precedence)."""
     parser = argparse.ArgumentParser()
-    instance = argparse.add_argument("DATABRICKS_HOST",required = True)
+    parser.add_argument(
+        "--DATABRICKS_HOST",
+        default=os.getenv("DATABRICKS_HOST") or os.getenv("DATABRICKS_WORKSPACE_URL") or os.getenv("DATABRICKS_URL"),
+        help="Databricks workspace URL (e.g., https://adb-123.azuredatabricks.net)"
+    )
+    # Parse only known args (in case other args passed)
+    args, _ = parser.parse_known_args()
+    
+    instance = args.DATABRICKS_HOST
     if not instance:
-        raise ValueError("Databricks URL not set. Set DATABRICKS_HOST or DATABRICKS_WORKSPACE_URL.")
+        raise ValueError(
+            "Databricks URL not set. Provide --DATABRICKS_HOST or set DATABRICKS_HOST / DATABRICKS_WORKSPACE_URL."
+        )
+    
+    instance = instance.strip()
     if not instance.startswith(("https://", "http://")):
         instance = f"https://{instance}"
     return instance.rstrip("/")
 
+
 def get_databricks_token() -> str:
-    
-    """Get PAT or OAuth token."""
-    
-    # token = (
-    #     os.getenv("DATABRICKS_TOKEN") or
-    #     os.getenv("DATABRICKS_ACCESS_TOKEN") or ""
-    # ).strip()
-    
+    """Get Databricks token from CLI args or env vars (CLI args take precedence)."""
     parser = argparse.ArgumentParser()
-    token = argparse.add_argument("DATABRICKS_TOKEN",required = True)
+    parser.add_argument(
+        "--DATABRICKS_TOKEN",
+        default=os.getenv("DATABRICKS_TOKEN") or os.getenv("DATABRICKS_ACCESS_TOKEN"),
+        help="Databricks personal access token (PAT) or OAuth token"
+    )
+    args, _ = parser.parse_known_args()
     
+    token = args.DATABRICKS_TOKEN
     if not token:
-        raise ValueError("Databricks token missing. Set DATABRICKS_TOKEN.")
-    return token
+        raise ValueError(
+            "Databricks token missing. Provide --DATABRICKS_TOKEN or set DATABRICKS_TOKEN / DATABRICKS_ACCESS_TOKEN."
+        )
+    return token.strip()
 
 def get_headers() -> Dict[str, str]:
     return {

@@ -3,7 +3,7 @@ resources:
     WF_Dev_Osaic_Source_Staging:
       name: WF_Dev_Osaic_Source_Staging
       tasks:
-        - task_key: NB_Osaic_Dev_Extraction_DataLoad_01
+        - task_key: NB_Osaic_Dev_Extraction_DataLoad_01_testing
           notebook_task:
             notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
             # source: WORKSPACE -- having this to ignore the null pointer exception
@@ -23,7 +23,7 @@ resources:
             no_alert_for_skipped_runs: true
         - task_key: NB_Osaic_Dev_FileMoveMent_updation_testing
           depends_on:
-            - task_key: NB_Osaic_Dev_Extraction_DataLoad_01
+            - task_key: NB_Osaic_Dev_Extraction_DataLoad_01_testing
           notebook_task:
             notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Movement.py
             base_parameters:
