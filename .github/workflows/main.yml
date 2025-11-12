@@ -35,6 +35,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests databricks-cli PyYAML
 
+      - name: Install Databricks CLI
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          choco install databricks-cli -y
+
       - name: Create AMALDAB directory structure
         shell: pwsh
         run: |
