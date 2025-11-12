@@ -20,11 +20,13 @@ from typing import Any, Dict, List, Optional
 
 def get_databricks_instance() -> str:
     """Get Databricks workspace URL from env vars."""
-    instance = (
-        os.getenv("DATABRICKS_WORKSPACE_URL") or
-        os.getenv("DATABRICKS_HOST") or
-        os.getenv("DATABRICKS_URL") or ""
-    ).strip()
+    # instance = (
+    #     os.getenv("DATABRICKS_WORKSPACE_URL") or
+    #     os.getenv("DATABRICKS_HOST") or
+    #     os.getenv("DATABRICKS_URL") or ""
+    # ).strip()
+    parser = argparse.ArgumentParser()
+    instance = argparse.add_argument("DATABRICKS_HOST",required = True)
     if not instance:
         raise ValueError("Databricks URL not set. Set DATABRICKS_HOST or DATABRICKS_WORKSPACE_URL.")
     if not instance.startswith(("https://", "http://")):
@@ -32,11 +34,17 @@ def get_databricks_instance() -> str:
     return instance.rstrip("/")
 
 def get_databricks_token() -> str:
+    
     """Get PAT or OAuth token."""
-    token = (
-        os.getenv("DATABRICKS_TOKEN") or
-        os.getenv("DATABRICKS_ACCESS_TOKEN") or ""
-    ).strip()
+    
+    # token = (
+    #     os.getenv("DATABRICKS_TOKEN") or
+    #     os.getenv("DATABRICKS_ACCESS_TOKEN") or ""
+    # ).strip()
+    
+    parser = argparse.ArgumentParser()
+    token = argparse.add_argument("DATABRICKS_TOKEN",required = True)
+    
     if not token:
         raise ValueError("Databricks token missing. Set DATABRICKS_TOKEN.")
     return token
