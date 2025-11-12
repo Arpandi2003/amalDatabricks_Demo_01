@@ -197,7 +197,7 @@ jobs:
 
           # Install & deploy
           & $cliPath bundle install
-          & $cliPath bundle deploy --target $env:ENV_NAME  
+          & $cliPath bundle deploy --target $env:ENV_NAME.ToLower()
 
           Write-Host "✅ Deployment completed successfully!"
   
