@@ -36,9 +36,9 @@ jobs:
           pip install requests databricks-cli PyYAML
 
       - name: Install Databricks CLI
-        uses: databricks/setup-cli@v1
+        uses: databricks/setup-cli@v0.3.0
         with:
-          version: 'latest'
+          version: '0.230.0'
 
       - name: Create AMALDAB directory structure
         shell: pwsh
@@ -147,9 +147,9 @@ jobs:
           fetch-depth: 0
 
       - name: Install Databricks CLI
-        uses: databricks/setup-cli@v1
+        uses: databricks/setup-cli@v0.3.0
         with:
-          version: 'latest'
+          version: '0.230.0'
 
       - name: Generate Databricks config for deployment
         shell: pwsh
