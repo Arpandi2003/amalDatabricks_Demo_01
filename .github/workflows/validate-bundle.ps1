@@ -1,10 +1,10 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-Enforces bundle policy:
-  1. is_test must NOT default to "Yes"/"yes"/"YES" in Python files (via dbutils.widgets.text)
-  2. Cluster names must match ^[a-zA-Z0-9_-]+$ in YAML (resources.SharedObjects.*.name)
-  3. No env names (dev/qa/prod/test/staging/uat/ab_dev) in values — in BOTH Python and YAML
+Bundle policy validator:
+  Rule 1 (PY): is_test must NOT default to "Yes"
+  Rule 2 (YAML): cluster names = ^[a-zA-Z0-9_-]+$
+  Rule 3 (PY+YAML): no env names (dev/qa/prod/etc.) in values
 #>
 
 param(
@@ -14,64 +14,65 @@ param(
 $ErrorActionPreference = "Stop"
 Write-Host "::group::🔍 Running bundle policy validator..."
 
-# 🔒 Set execution policy for this process only
+# 🔒 Execution policy
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
 
-# ⚙️ Configuration
+# ⚙️ Config
 $forbiddenEnvs = @("dev", "ab_dev", "qa", "prod", "test", "staging", "uat")
 $envPattern = "\b(" + ($forbiddenEnvs -join "|") + ")\b"
 
-# 📁 Gather files
 $yamlFiles = Get-ChildItem -Path "$BundleDir" -Include "*.yml", "*.yaml" -Recurse
 $pyFiles   = Get-ChildItem -Path "$BundleDir" -Include "*.py" -Recurse
 
-Write-Host "Found $($pyFiles.Count) Python and $($yamlFiles.Count) YAML files to scan."
+Write-Host "Found $($pyFiles.Count) Python and $($yamlFiles.Count) YAML files."
 
 $violations = @()
 
 # ───────────────────────────────────────
-# 🔹 RULE 1 & 3: PYTHON FILES (.py)
+# 🔹 PYTHON FILES — Rule 1 & Rule 3
 # ───────────────────────────────────────
 foreach ($file in $pyFiles) {
     Write-Host "  [PY] $($file.Name)"
-    $content = Get-Content $file.FullName -Raw
-    if ([string]::IsNullOrWhiteSpace($content)) { continue }
+    try {
+        # Safely read as UTF8 (avoid encoding issues)
+        $content = Get-Content $file.FullName -Raw -Encoding UTF8
+        if ([string]::IsNullOrWhiteSpace($content)) { continue }
 
-    # 🔸 Rule 1: is_test widget defaults to "Yes"
-    $isTestPattern = 'dbutils\s*\.\s*widgets\s*\.\s*text\s*\(\s*["''][Ii]s[Tt]est["'']\s*,\s*["''][Yy][Ee][Ss]["'']\s*[,)]'
-    $matches = Select-String -Path $file.FullName -Pattern $isTestPattern -CaseSensitive:$false -AllMatches
-    foreach ($match in $matches.Matches) {
-        $lineNum = $match.LineNumber
-        $lineText = $match.Line.Trim()
-        $violations += "❌ [Rule 1] is_test defaulted to 'Yes' in $($file.Name):$lineNum → '$lineText'"
+        # 🔸 Rule 1: is_test = "Yes" via widget
+        $isTestPattern = 'dbutils\s*\.\s*widgets\s*\.\s*text\s*\(\s*["''][Ii]s[Tt]est["'']\s*,\s*["''][Yy][Ee][Ss]["'']\s*[,)]'
+        $matches = Select-String -Path $file.FullName -Pattern $isTestPattern -CaseSensitive:$false -AllMatches -Encoding UTF8
+        foreach ($match in $matches.Matches) {
+            $lineNum = $match.LineNumber
+            $lineText = if ($match.Line) { $match.Line.Trim() } else { "[line unavailable]" }
+            $violations += "❌ [Rule 1] is_test defaulted to 'Yes' in $($file.Name):$lineNum → '$lineText'"
+        }
+
+        # 🔸 Rule 3: Env leaks
+        $envMatches = Select-String -Path $file.FullName -Pattern $envPattern -CaseSensitive:$false -AllMatches -Encoding UTF8
+        foreach ($match in $envMatches.Matches) {
+            $lineNum = $match.LineNumber
+            $lineText = if ($match.Line) { $match.Line.Trim() } else { "[line unavailable]" }
+            $envName = $match.Value
+
+            if ($lineText -notmatch "\.$envName\.") {
+                $violations += "❌ [Rule 3] Env '$envName' in Python $($file.Name):$lineNum → '$lineText'"
+            }
+        }
     }
-
-    # 🔸 Rule 3: Env leaks in Python (case-insensitive word boundary)
-    $envMatches = Select-String -Path $file.FullName -Pattern $envPattern -CaseSensitive:$false -AllMatches
-    foreach ($match in $envMatches.Matches) {
-        $lineNum = $match.LineNumber
-        $lineText = $match.Line.Trim()
-        $envName = $match.Value
-
-        # ✅ Allow domains like dev.databricks.com, qa.cloud
-        if ($lineText -match "\.$envName\.") { continue }
-
-        # ✅ Skip comments (optional — uncomment to enable)
-        # if ($lineText -match '^\s*#') { continue }
-
-        $violations += "❌ [Rule 3] Env '$envName' in Python $($file.Name):$lineNum → '$lineText'"
+    catch {
+        Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
     }
 }
 
 # ───────────────────────────────────────
-# 🔹 RULES 2 & 3: YAML FILES (.yml/.yaml)
+# 🔹 YAML FILES — Rule 2 & Rule 3
 # ───────────────────────────────────────
 foreach ($file in $yamlFiles) {
     Write-Host "  [YAML] $($file.Name)"
-    $content = Get-Content $file.FullName -Raw
-    if ([string]::IsNullOrWhiteSpace($content)) { continue }
-
     try {
+        $content = Get-Content $file.FullName -Raw -Encoding UTF8
+        if ([string]::IsNullOrWhiteSpace($content)) { continue }
+
         $data = $content | ConvertFrom-Yaml -ErrorAction Stop
 
         function Test-Node {
@@ -82,24 +83,22 @@ foreach ($file in $yamlFiles) {
                     $currentPath = if ($path) { "$path.$key" } else { "$key" }
                     $val = $obj[$key]
 
-                    # 🔸 Rule 2: Cluster name format (YAML only)
+                    # 🔸 Rule 2: Cluster name format
                     if ($currentPath -match "^resources\.SharedObjects\..+\.name$" -and $val -is [string]) {
                         if ($val -notmatch "^[a-zA-Z0-9_-]+$") {
                             $violations += "❌ [Rule 2] Invalid cluster name '$val' at ${currentPath} (file: $($file.Name))"
                         }
                     }
 
-                    # 🔸 Rule 3: Env leaks in string values (YAML only)
+                    # 🔸 Rule 3: Env in YAML values
                     if ($val -is [string]) {
                         foreach ($envName in $forbiddenEnvs) {
-                            # Case-insensitive word-boundary match, exclude *.envName.*
                             if ($val -match "(?i)\b$envName\b" -and $val -notmatch "\.$envName\.") {
                                 $violations += "❌ [Rule 3] Env '$envName' in YAML value at ${currentPath}: '$val' (file: $($file.Name))"
                             }
                         }
                     }
 
-                    # Recurse
                     Test-Node -obj $val -path $currentPath
                 }
             }
@@ -111,9 +110,9 @@ foreach ($file in $yamlFiles) {
         }
 
         Test-Node -obj $data
-
-    } catch {
-        Write-Warning "⚠️ Skipping $($file.Name): Invalid or non-YAML content"
+    }
+    catch {
+        Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
     }
 }
 
@@ -124,22 +123,8 @@ Write-Host "::endgroup::"
 if ($violations.Count -gt 0) {
     Write-Host "🛑 Policy violations detected:"
     $violations | ForEach-Object { Write-Host "  $_" }
-    
-    # Optional: GitHub Actions annotations (uncomment to enable)
-    # $violations | ForEach-Object {
-    #     if ($_ -match "in (?<file>[^:]+):(?<line>\d+) →") {
-    #         $file = $Matches.file
-    #         $line = $Matches.line
-    #         $msg = ($_ -replace ".*→ '", "") -replace "'$", ""
-    #         Write-Host "::error file=$file,line=$line::$msg"
-    #     }
-    # }
-    
     exit 1
 } else {
-    Write-Host "✅ Bundle policy check PASSED:"
-    Write-Host "   • Rule 1 (is_test ≠ 'Yes') — enforced in $($pyFiles.Count) Python files"
-    Write-Host "   • Rule 2 (cluster name format) — enforced in $($yamlFiles.Count) YAML files"
-    Write-Host "   • Rule 3 (no env leaks) — enforced in $($pyFiles.Count + $yamlFiles.Count) files"
+    Write-Host "✅ Bundle policy check PASSED."
     exit 0
 }
