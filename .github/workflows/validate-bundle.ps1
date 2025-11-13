@@ -11,11 +11,11 @@ param(
 $ErrorActionPreference = "Stop"
 Write-Host "::group::🔍 Running bundle policy checks..."
 
-# 1. Scan all YAML files in resources/ and config/
+# 1. Scan all YAML/Python files in the bundle
 $yamlFiles = Get-ChildItem -Path "$BundleDir" -Include "*.py", "*.yml", "*.yaml" -Recurse
 
 if ($yamlFiles.Count -eq 0) {
-    Write-Warning "No YAML files found in $BundleDir"
+    Write-Warning "No YAML/Python files found in $BundleDir"
     exit 0
 }
 
@@ -25,6 +25,10 @@ foreach ($file in $yamlFiles) {
     Write-Host "  Checking $($file.FullName)"
     try {
         $content = Get-Content $file.FullName -Raw
+        # Skip if empty
+        if ([string]::IsNullOrWhiteSpace($content)) { continue }
+
+        # Attempt YAML parse (most files are YAML); skip if fails
         $data = $content | ConvertFrom-Yaml -ErrorAction Stop
 
         # Helper: Recursively scan for policy violations
@@ -34,41 +38,42 @@ foreach ($file in $yamlFiles) {
             if ($obj -is [System.Collections.IDictionary]) {
                 foreach ($key in $obj.Keys) {
                     $currentPath = if ($path) { "$path.$key" } else { "$key" }
+                    $val = $obj[$key]
 
-                    # Rule 1: is_test must not be "yes"
-                    if ($key -eq "is_test" -and $obj[$key] -eq "dbutils.widgets.text('IsTest','Yes')") {
-                        $violations += "❌ [Rule 1] 'is_test: yes' found at $currentPath in $($file.Name)"
+                    # Rule 1: is_test must not be "yes" (or equivalent patterns)
+                    if ($key -eq "is_test" -and ($val -eq "yes" -or $val -eq "Yes" -or $val -match "dbutils\.widgets\.text\(\s*'IsTest'\s*,\s*'Yes'")) {
+                        $violations += "❌ [Rule 1] 'is_test: yes' found at ${currentPath} (file: $($file.Name))"
                     }
 
                     # Rule 3: Block env names in *values* (not keys!)
-                    $val = $obj[$key]
                     if ($val -is [string]) {
-                        # List of forbidden env substrings (case-insensitive)
                         $forbiddenEnvs = @("dev", "ab_dev", "qa", "prod", "test", "staging", "uat")
                         foreach ($envName in $forbiddenEnvs) {
+                            # Word-boundary match, case-insensitive
                             if ($val -match "(?i)\b$envName\b") {
-                                # Allow if it's part of a domain (e.g., "dev.databricks.com") → skip
-                                # But block if standalone or in resource names
+                                # Allow if part of domain (e.g., dev.databricks.com), deny otherwise
                                 if ($val -notmatch "\.$envName\.") {
-                                    $violations += "❌ [Rule 3] Env name '$envName' in value at $currentPath: '$val' (file: $($file.Name))"
+                                    $violations += "❌ [Rule 3] Env name '$envName' in value at ${currentPath}: '$val' (file: $($file.Name))"
                                 }
                             }
                         }
                     }
 
-                    # Rule 2: Check cluster names (in `resources.clusters.*.name`)
+                    # Rule 2: Validate cluster names (adjust path pattern as needed)
+                    # Update: You said SharedObjects — ensure this matches your actual path structure
                     if ($currentPath -match "^resources\.SharedObjects\..+\.name$" -and $val -is [string]) {
                         if ($val -notmatch "^[a-zA-Z0-9_-]+$") {
-                            $violations += "❌ [Rule 2] Invalid cluster name '$val' at $currentPath (file: $($file.Name)). Only letters, digits, '-', '_' allowed."
+                            $violations += "❌ [Rule 2] Invalid cluster name '$val' at ${currentPath} (file: $($file.Name)). Only letters, digits, '-', '_' allowed."
                         }
                     }
 
-                    # Recurse
-                    Test-Node -obj $obj[$key] -path $currentPath
+                    # Recurse into child nodes
+                    Test-Node -obj $val -path $currentPath
                 }
-            } elseif ($obj -is [System.Collections.IList]) {
+            }
+            elseif ($obj -is [System.Collections.IList]) {
                 for ($i = 0; $i -lt $obj.Count; $i++) {
-                    Test-Node -obj $obj[$i] -path "$path[$i]"
+                    Test-Node -obj $obj[$i] -path "${path}[$i]"
                 }
             }
         }
@@ -76,18 +81,18 @@ foreach ($file in $yamlFiles) {
         Test-Node -obj $data
 
     } catch {
-        Write-Warning "⚠️ Could not parse $($file.Name): $_"
+        Write-Warning "⚠️ Could not parse $($file.Name) as YAML: $_"
+        # Optionally: skip or fall back to string scan for env leaks in raw text
     }
 }
 
-# Report
+# Final report
+Write-Host "::endgroup::"
 if ($violations.Count -gt 0) {
-    Write-Host "::endgroup::"
     Write-Host "🛑 Policy violations detected:"
     $violations | ForEach-Object { Write-Host "  $_" }
     exit 1
 } else {
-    Write-Host "::endgroup::"
     Write-Host "✅ All bundle files comply with naming and config policies."
     exit 0
 }
