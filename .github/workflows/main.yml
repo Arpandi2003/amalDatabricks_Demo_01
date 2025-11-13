@@ -2,7 +2,7 @@ name: Databricks Notebooks Deployment
 
 on:
   workflow_dispatch:
-  push:
+  # push:
     # branches:
     #   - main
     #   - dev
