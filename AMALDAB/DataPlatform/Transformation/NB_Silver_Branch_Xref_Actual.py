@@ -365,6 +365,7 @@ except Exception as e:
 DestinationSchema = dbutils.widgets.text("DestinationSchema",' ')
 DestinationTable = dbutils.widgets.text("DestinationTable",' ')
 AddOnType = dbutils.widgets.text("AddOnType",' ')
+is_test = dbutils.widgets.text("IsTest","Yes","IsTest")
 
 # COMMAND ----------
 
