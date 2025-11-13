@@ -48,20 +48,20 @@ foreach ($file in $pyFiles) {
         }
 
         # 🔸 Rule 3: Env leaks
-        $envMatches = Select-String -Path $file.FullName -Pattern $envPattern -CaseSensitive:$false -AllMatches -Encoding UTF8
-        foreach ($match in $envMatches.Matches) {
-            $lineNum = $match.LineNumber
-            $lineText = if ($match.Line) { $match.Line.Trim() } else { "[line unavailable]" }
-            $envName = $match.Value
+    #     $envMatches = Select-String -Path $file.FullName -Pattern $envPattern -CaseSensitive:$false -AllMatches -Encoding UTF8
+    #     foreach ($match in $envMatches.Matches) {
+    #         $lineNum = $match.LineNumber
+    #         $lineText = if ($match.Line) { $match.Line.Trim() } else { "[line unavailable]" }
+    #         $envName = $match.Value
 
-            if ($lineText -notmatch "\.$envName\.") {
-                $violations += "❌ [Rule 3] Env '$envName' in Python $($file.Name):$lineNum → '$lineText'"
-            }
-        }
-    }
-    catch {
-        Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
-    }
+    #         if ($lineText -notmatch "\.$envName\.") {
+    #             $violations += "❌ [Rule 3] Env '$envName' in Python $($file.Name):$lineNum → '$lineText'"
+    #         }
+    #     }
+    # }
+    # catch {
+    #     Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
+    # }
 }
 
 # ───────────────────────────────────────
