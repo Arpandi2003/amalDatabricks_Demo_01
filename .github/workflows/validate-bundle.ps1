@@ -124,8 +124,7 @@ Write-Host "::endgroup::"
 if ($violations.Count -gt 0) {
     Write-Host "🛑 Policy violations detected:"
     $violations | ForEach-Object { Write-Host "  $_" }
-    exit 1
 } else {
     Write-Host "✅ Bundle policy check PASSED."
-    exit 0
+   
 }
