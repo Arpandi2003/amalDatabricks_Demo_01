@@ -46,7 +46,6 @@ foreach ($file in $pyFiles) {
             $lineText = if ($match.Line) { $match.Line.Trim() } else { "[line unavailable]" }
             $violations += "❌ [Rule 1] is_test defaulted to 'Yes' in $($file.Name):$lineNum → '$lineText'"
         }
-    }
 
         # 🔸 Rule 3: Env leaks
         $envMatches = Select-String -Path $file.FullName -Pattern $envPattern -CaseSensitive:$false -AllMatches -Encoding UTF8
@@ -59,6 +58,7 @@ foreach ($file in $pyFiles) {
                 $violations += "❌ [Rule 3] Env '$envName' in Python $($file.Name):$lineNum → '$lineText'"
             }
         }
+    }
     catch {
         Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
     }
