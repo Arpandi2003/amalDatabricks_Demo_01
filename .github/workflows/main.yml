@@ -15,22 +15,43 @@ on:
     #   - databricks.yml
 
 jobs:
-  # Prerequisites job - must complete first
   UniTesting:
     runs-on: windows-latest
-    steps:
-      - name: Install PowerShell YAML module
+    defaults:
+      run:
         shell: pwsh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell YAML module
         run: |
-          # Install silently, no prompts
           $ProgressPreference = 'SilentlyContinue'
           Install-Module powershell-yaml -Force -Scope CurrentUser -AllowClobber
+          # Verify installation
+          Import-Module powershell-yaml -ErrorAction Stop
 
       - name: Enforce bundle config policies (is_test, cluster names, env leaks)
-        shell: pwsh
         run: |
           Write-Host "🔍 Running bundle policy validator..."
-          validate-bundle.ps1 -BundleDir "AMALDAB"
+          
+          # 🔒 Set execution policy for this session only
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+          
+          # 📍 Define full path to script (relative to repo root)
+          $scriptPath = ".github/workflows/validate-bundle.ps1"
+          
+          # 🔍 Debug: verify script exists
+          if (-not (Test-Path $scriptPath)) {
+            Write-Error "❌ Script NOT found at: $scriptPath"
+            Get-ChildItem -Path . -Recurse | Where-Object Name -like "*validate*"
+            exit 1
+          }
+          
+          # ✅ Unblock & execute script safely
+          Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
+          & $scriptPath -BundleDir "AMALDAB"
+          
           Write-Host "✅ Policy check passed."
           
   run-prerequisites:
