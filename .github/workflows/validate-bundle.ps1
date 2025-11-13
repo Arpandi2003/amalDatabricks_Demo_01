@@ -60,9 +60,9 @@ foreach ($file in $pyFiles) {
     #         }
     #     }
     # }
-    # catch {
-    #     Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
-    # }
+    catch {
+        Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
+    }
 # }
 
 # ───────────────────────────────────────
