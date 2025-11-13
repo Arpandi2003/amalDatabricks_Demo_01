@@ -63,7 +63,7 @@ foreach ($file in $pyFiles) {
     catch {
         Write-Warning "⚠️ Skipping $($file.Name): $($_.Exception.Message)"
     }
-# }
+}
 
 # ───────────────────────────────────────
 # 🔹 YAML FILES — Rule 2 & Rule 3
