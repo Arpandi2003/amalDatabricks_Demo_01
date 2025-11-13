@@ -30,7 +30,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Running bundle policy validator..."
-          .\.github\workflows\validate-bundle.ps1 -BundleDir "AMALDAB"
+          .github\workflows\validate-bundle.ps1 -BundleDir "AMALDAB"
           Write-Host "✅ Policy check passed."
           
   run-prerequisites:
