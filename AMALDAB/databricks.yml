@@ -2,37 +2,65 @@
 bundle:
   name: amaldatabricks
   uuid: 98bee946-7642-4fd2-beb9-d89c27ed0c2c
-  
+
 include:
   - resources/**/*.yml
   - config/*.yml
   - resources/*.yml
 
-sync:
-  exclude:
-    - resources/SharedObjects/*.yml
+# Removed sync exclusion to allow SharedObjects deployment
+# sync:
+#   exclude:
+#     - resources/SharedObjects/*.yml
 
 artifacts:
   notebooks:
     files:
       - source: DataPlatform/**/*.py
 
+# Define common variables that can be overridden per environment
+variables:
+  workspace_host:
+    description: "Databricks workspace URL"
+  service_principal_id:
+    description: "Service Principal ID for run_as"
+  catalog_name:
+    description: "Unity Catalog name"
+  email_notifications:
+    description: "Email for job notifications"
+    default: pandi.anbu@zeb.co
+  git_branch:
+    description: "Git branch name"
+
 targets:
   DEV:
-    mode: production
+    mode: development
     default: true
 
     run_as:
-      service_principal_name: a7923e63-e14c-4c32-87cc-e89e3b4a165a
+      service_principal_name: ${var.service_principal_id}
 
     presets:
       source_linked_deployment: false
+      name_prefix: '[DEV]'
       tags:
         amal_owner: DataEngineering
         Environment: Dev
+        deployed_by: github-actions
+        managed_by: databricks-asset-bundle
+
+    variables:
+      workspace_host:
+        default: https://adb-201068313543333.13.azuredatabricks.net
+      service_principal_id:
+        default: a7923e63-e14c-4c32-87cc-e89e3b4a165a
+      catalog_name:
+        default: ab_dev_catalog
+      git_branch:
+        default: dev
 
     workspace:
-      host: https://adb-201068313543333.13.azuredatabricks.net
+      host: ${var.workspace_host}
       root_path: /Workspace/AMAL_DEV/${bundle.target}
 
     permissions:
@@ -45,25 +73,30 @@ targets:
     mode: production
 
     run_as:
-      service_principal_name: a7923e63-e14c-4c32-87cc-e89e3b4a165a
+      service_principal_name: ${var.service_principal_id}
 
     presets:
       source_linked_deployment: false
+      name_prefix: '[QA]'
       tags:
         amal_owner: DataEngineering
         Environment: QA
+        deployed_by: github-actions
+        managed_by: databricks-asset-bundle
 
     variables:
+      workspace_host:
+        default: https://adb-201068313543333.13.azuredatabricks.net
+      service_principal_id:
+        default: a7923e63-e14c-4c32-87cc-e89e3b4a165a
       catalog_name:
-        default: ab_uat_catalog
-      email_notifications:
-        default: pandi.anbu@zeb.co
+        default: ab_qa_catalog
       git_branch:
         default: qa
 
     workspace:
-      host: https://adb-201068313543333.13.azuredatabricks.net
-      root_path: /Workspace/${bundle.target}
+      host: ${var.workspace_host}
+      root_path: /Workspace/AMAL_QA/${bundle.target}
 
     permissions:
       - group_name: DataEngineering
@@ -75,25 +108,33 @@ targets:
     mode: production
 
     run_as:
-      service_principal_name: a7923e63-e14c-4c32-87cc-e89e3b4a165a
+      service_principal_name: ${var.service_principal_id}
 
     presets:
+      source_linked_deployment: false
+      name_prefix: '[PROD]'
       tags:
         amal_owner: DataEngineering
         Environment: Prod
+        deployed_by: github-actions
+        managed_by: databricks-asset-bundle
 
     variables:
+      workspace_host:
+        default: https://adb-201068313543333.13.azuredatabricks.net
+      service_principal_id:
+        default: a7923e63-e14c-4c32-87cc-e89e3b4a165a
       catalog_name:
         default: ab_prod_catalog
-      email_notifications:
-        default: pandi.anbu@zeb.co
       git_branch:
         default: prod
 
     workspace:
-      host: https://adb-201068313543333.13.azuredatabricks.net
-      root_path: /Workspace/${bundle.target}
+      host: ${var.workspace_host}
+      root_path: /Workspace/AMAL_PROD/${bundle.target}
 
     permissions:
+      - group_name: DataEngineering
+        level: CAN_MANAGE
       - user_name: a7923e63-e14c-4c32-87cc-e89e3b4a165a
         level: CAN_MANAGE

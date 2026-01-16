@@ -4,10 +4,8 @@
 # Databricks Disaster Recovery Backup Script
 # Extracts configuration-as-code for compute, UC metadata, and permissions.
 
-#known issue 
-    #Update get_databricks_token function to generate the access token for SP
-
 import os
+import sys
 import requests
 import json
 import yaml
@@ -19,49 +17,55 @@ from typing import Any, Dict, List, Optional
 # 🛠️ CONFIGURATION & UTILITIES
 # ===================================================================
 
-import os
-import argparse
-import sys
+# Global variables to store parsed arguments
+_ARGS = None
+
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description='Databricks Disaster Recovery Backup Script',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        '--DATABRICKS_HOST',
+        required=True,
+        help='Databricks workspace URL (e.g., https://adb-xxx.azuredatabricks.net)'
+    )
+    parser.add_argument(
+        '--DATABRICKS_TOKEN',
+        required=True,
+        help='Databricks Personal Access Token or OAuth token'
+    )
+    return parser.parse_args()
 
 def get_databricks_instance() -> str:
-    """Get Databricks workspace URL from CLI args or env vars (CLI args take precedence)."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--DATABRICKS_HOST",
-        default=os.getenv("DATABRICKS_HOST") or os.getenv("DATABRICKS_WORKSPACE_URL") or os.getenv("DATABRICKS_URL"),
-        help="Databricks workspace URL (e.g., https://adb-123.azuredatabricks.net)"
-    )
-    # Parse only known args (in case other args passed)
-    args, _ = parser.parse_known_args()
-    
-    instance = args.DATABRICKS_HOST
+    """Get Databricks workspace URL from command line args."""
+    global _ARGS
+    if _ARGS is None:
+        raise RuntimeError("Arguments not parsed. Call parse_arguments() first.")
+
+    instance = _ARGS.DATABRICKS_HOST.strip()
+
     if not instance:
-        raise ValueError(
-            "Databricks URL not set. Provide --DATABRICKS_HOST or set DATABRICKS_HOST / DATABRICKS_WORKSPACE_URL."
-        )
-    
-    instance = instance.strip()
+        raise ValueError("Databricks URL not set. Provide --DATABRICKS_HOST argument.")
+
     if not instance.startswith(("https://", "http://")):
         instance = f"https://{instance}"
+
     return instance.rstrip("/")
 
-
 def get_databricks_token() -> str:
-    """Get Databricks token from CLI args or env vars (CLI args take precedence)."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--DATABRICKS_TOKEN",
-        default=os.getenv("DATABRICKS_TOKEN") or os.getenv("DATABRICKS_ACCESS_TOKEN"),
-        help="Databricks personal access token (PAT) or OAuth token"
-    )
-    args, _ = parser.parse_known_args()
-    
-    token = args.DATABRICKS_TOKEN
+    """Get PAT or OAuth token from command line args."""
+    global _ARGS
+    if _ARGS is None:
+        raise RuntimeError("Arguments not parsed. Call parse_arguments() first.")
+
+    token = _ARGS.DATABRICKS_TOKEN.strip()
+
     if not token:
-        raise ValueError(
-            "Databricks token missing. Provide --DATABRICKS_TOKEN or set DATABRICKS_TOKEN / DATABRICKS_ACCESS_TOKEN."
-        )
-    return token.strip()
+        raise ValueError("Databricks token missing. Provide --DATABRICKS_TOKEN argument.")
+
+    return token
 
 def get_headers() -> Dict[str, str]:
     return {
@@ -70,9 +74,20 @@ def get_headers() -> Dict[str, str]:
     }
 
 def api_get(url: str, timeout: int = 60) -> Any:
-    resp = requests.get(url, headers=get_headers(), timeout=timeout)
-    resp.raise_for_status()
-    return resp.json()
+    """Make GET request to Databricks API with error handling."""
+    try:
+        resp = requests.get(url, headers=get_headers(), timeout=timeout)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ HTTP Error: {e}")
+        print(f"   URL: {url}")
+        if hasattr(e.response, 'text'):
+            print(f"   Response: {e.response.text[:200]}")
+        raise
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Request Error: {e}")
+        raise
 
 def safe_write_yml(filepath: str, data: Dict) -> None:
     if not data:
@@ -387,7 +402,19 @@ def grant_to_sql(grant: Dict, securable_type: str, full_name: str) -> str:
 # ===================================================================
 
 def main():
-    print(" Starting Databricks DR Configuration Backup")
+    """Main execution function."""
+    global _ARGS
+
+    # Parse command line arguments first
+    _ARGS = parse_arguments()
+
+    print("=" * 70)
+    print("🚀 Starting Databricks DR Configuration Backup")
+    print("=" * 70)
+    print(f"📍 Workspace: {get_databricks_instance()}")
+    print(f"📁 Output Directory: ./AMALDAB/resources/")
+    print("=" * 70)
+
     base_dir = "./AMALDAB/resources/SharedObjects"
     ddl_dir = "./AMALDAB/resources/uc_ddl"
 
@@ -496,9 +523,21 @@ def main():
     if grant_statements:
         safe_write_sql(f"{ddl_dir}/99_grants.ddl.sql", "\n".join(grant_statements))
 
-    print("\n DR backup completed!")
-    print(f" Bundle configs: {base_dir}")
-    print(f" UC DDL & grants: {ddl_dir}")
+    print("\n" + "=" * 70)
+    print("✅ DR backup completed successfully!")
+    print("=" * 70)
+    print(f"📦 Bundle configs: {base_dir}")
+    print(f"📜 UC DDL & grants: {ddl_dir}")
+    print("=" * 70)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+        sys.exit(0)
+    except Exception as e:
+        print("\n" + "=" * 70)
+        print(f"❌ ERROR: {str(e)}")
+        print("=" * 70)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

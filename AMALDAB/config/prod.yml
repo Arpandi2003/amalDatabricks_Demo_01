@@ -1,0 +1,35 @@
+# PROD Environment Configuration
+# Override default variables for PROD environment
+
+variables:
+  # Unity Catalog configuration
+  catalog_name:
+    default: ab_prod_catalog
+  
+  # Notification settings
+  email_notifications:
+    default: pandi.anbu@zeb.co
+  
+  # Git configuration
+  git_branch:
+    default: main
+  
+  # Workspace configuration (update with actual PROD workspace URL)
+  workspace_host:
+    default: https://adb-201068313543333.13.azuredatabricks.net
+  
+  # Service Principal configuration (IMPORTANT: Use PROD-specific SP)
+  service_principal_id:
+    default: a7923e63-e14c-4c32-87cc-e89e3b4a165a
+  
+  # Environment-specific settings
+  environment_name:
+    default: Production
+  
+  # Storage configuration
+  storage_account:
+    default: stgazdbricksprod001
+  
+  external_location_container:
+    default: prod-external-location
+
