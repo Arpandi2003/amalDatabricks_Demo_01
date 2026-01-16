@@ -1,72 +1,90 @@
 resources:
   jobs:
-    dev_dab_test_job_2:
-      name: "[dev dab] test_job_2"
-      email_notifications:
+    [dev dab] test_job_2:
+      name: [dev dab] test_job_2
+      webhook_notifications:
         on_failure:
-          - vijayaramuprawin@avatest.in
-      schedule:
-        quartz_cron_expression: 19 0 8 * * ?
-        timezone_id: America/New_York
-        pause_status: PAUSED
-      max_concurrent_runs: 4
+          - id: b1e7c5f7-e526-4f54-818c-3a5a7acc5127
       tasks:
-        - task_key: extraction
+        - task_key: Extraction_To_Bronze_1
           notebook_task:
-            notebook_path: bundles/test-2/extraction
-            source: GIT
-          job_cluster_key: test_job_cluster
-          libraries:
-            - maven:
-                coordinates: com.databricks.labs:overwatch_2.12:0.7.1.3
-        - task_key: gold
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+              Notebook/Trackvia_To_Bronze
+            base_parameters:
+              TableListIDs: 1,2,3
+            source: WORKSPACE
+          existing_cluster_id: 0130-103345-kb0sn6su
+        - task_key: Extraction_To_Bronze_2
+          notebook_task:
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Movement.py
+              Notebook/Trackvia_To_Bronze
+            base_parameters:
+              TableListIDs: 4,5,6,7
+            source: WORKSPACE
+          existing_cluster_id: 0130-103345-kb0sn6su
+        - task_key: Silver_Employee
           depends_on:
-            - task_key: silver
+            - task_key: Extraction_To_Bronze_2
+            - task_key: Extraction_To_Bronze_1
           notebook_task:
-            notebook_path: bundles/test-2/gold
-            source: GIT
-          job_cluster_key: test_job_cluster
-          libraries:
-            - maven:
-                coordinates: com.databricks.labs:overwatch_2.12:0.7.1.3
-            - maven:
-                coordinates: com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.21
-            - pypi:
-                package: azure-storage-blob
-            - pypi:
-                package: paramiko
-        - task_key: silver
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+              Notebook/Transformation_Silver_Employee
+            source: WORKSPACE
+          job_cluster_key: Job_cluster
+        - task_key: Silver_Job
           depends_on:
-            - task_key: extraction
+            - task_key: Extraction_To_Bronze_1
+            - task_key: Extraction_To_Bronze_2
           notebook_task:
-            notebook_path: bundles/test-2/silver
-            source: GIT
-          job_cluster_key: test_job_cluster
-          libraries:
-            - maven:
-                coordinates: com.databricks.labs:overwatch_2.12:0.7.1.3
-            - maven:
-                coordinates: com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.21
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+              Notebook/Transformation_Silver_Job
+            source: WORKSPACE
+          job_cluster_key: Job_cluster
+        - task_key: Gold_Dim_Employee
+          depends_on:
+            - task_key: Silver_Employee
+            - task_key: Silver_Job
+          notebook_task:
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+            source: WORKSPACE
+          job_cluster_key: Job_cluster
+        - task_key: Gold_Dim_Job
+          notebook_task:
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+            source: WORKSPACE
+          job_cluster_key: Job_cluster
+        - task_key: Gold_Dim_Timesheet
+          depends_on:
+            - task_key: Gold_Dim_Job
+          notebook_task:
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+            source: WORKSPACE
+          job_cluster_key: Job_cluster
+        - task_key: Gold_Dim_TSLineItem
+          depends_on:
+            - task_key: Gold_Dim_Timesheet
+          notebook_task:
+            notebook_path: ../../DataPlatform/Extraction/NB_FlatFile_Osaic_Extraction.py
+            source: WORKSPACE
+          job_cluster_key: Job_cluster
       job_clusters:
-        - job_cluster_key: test_job_cluster
+        - job_cluster_key: Job_cluster
           new_cluster:
-            spark_version: 16.4.x-scala2.12
+            cluster_name: ""
+            spark_version: 14.3.x-scala2.12
+            spark_conf:
+              spark.master: local[*, 4]
+              spark.databricks.cluster.profile: singleNode
             azure_attributes:
+              first_on_demand: 1
               availability: ON_DEMAND_AZURE
-            node_type_id: Standard_D3_v2
-            spark_env_vars:
-              PYSPARK_PYTHON: /databricks/python3/bin/python3
+              spot_bid_max_price: -1
+            node_type_id: Standard_DS3_v2
+            custom_tags:
+              ResourceClass: SingleNode
             enable_elastic_disk: true
             data_security_mode: SINGLE_USER
             runtime_engine: STANDARD
-            autoscale:
-              min_workers: 2
-              max_workers: 3
-      git_source:
-        git_url: https://avacloudpoc@dev.azure.com/avacloudpoc/DataOps/_git/azure_databricks_asset_bundles
-        git_provider: azureDevOpsServices
-        git_branch: main
-      tags:
-        dev: dab
+            num_workers: 0
       queue:
         enabled: true
