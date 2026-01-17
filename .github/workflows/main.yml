@@ -1,9 +1,19 @@
-name: Databricks Notebooks Deployment
+name: Databricks Asset Bundle Deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - DEV
+          - QA
+          - PROD
+  # Uncomment to enable automatic deployment on push
   # push:
-  #   branches: [main, dev, qa]
+  #   branches: [dev, qa, main]
   #   paths:
   #     - 'AMALDAB/**'
   #     - '.github/workflows/**'
@@ -38,10 +48,10 @@ jobs:
       - name: Install Databricks CLI
         shell: pwsh
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          choco install databricks-cli -y
+          Write-Host "📦 Installing Databricks CLI..."
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.ps1 | pwsh
+          databricks --version
+          Write-Host "✅ Databricks CLI installed successfully"
 
       - name: Create AMALDAB directory structure
         shell: pwsh
@@ -53,41 +63,51 @@ jobs:
         id: set-env
         shell: pwsh
         run: |
-          $branch = "${{ github.ref }}"
-          $envName = switch ($branch) {
-            "refs/heads/main" { "PROD" }
-            "refs/heads/qa"   { "QA" }
-            "refs/heads/dev"  { "DEV" }
-            default           { "DEV" }
+          # Use manual input if workflow_dispatch, otherwise determine from branch
+          if ("${{ github.event.inputs.environment }}" -ne "") {
+            $envName = "${{ github.event.inputs.environment }}"
+            Write-Host "::notice::Using manual environment selection: $envName"
+          } else {
+            $branch = "${{ github.ref }}"
+            $envName = switch ($branch) {
+              "refs/heads/main" { "PROD" }
+              "refs/heads/qa"   { "QA" }
+              "refs/heads/dev"  { "DEV" }
+              default           { "DEV" }
+            }
+            Write-Host "::notice::Environment determined from branch: $envName"
           }
+
           echo "ENV_NAME=$envName" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "env_name=$envName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "::notice::Target environment: $envName"
+          Write-Host "::notice::🎯 Target environment: $envName"
 
       - name: Generate Databricks config file
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
-          @"
-          [DEV]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
-          
-          [QA]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
-          
-          [PROD]
-          host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
-          
-          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
-          databricks auth profiles
-          Write-Host "✅ .databrickscfg generated with UAT and PROD profiles"
+          Write-Host "🔐 Generating Databricks authentication configuration..."
+          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks | Out-Null
+
+          # Create config file with proper formatting
+          "[DEV]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_id = ${{ vars.DEV_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_secret = ${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "[QA]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_id = ${{ vars.QA_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_secret = ${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "[PROD]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "host = ${{ vars.PROD_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_id = ${{ vars.PROD_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_secret = ${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F" | Out-Null
+
+          Write-Host "✅ .databrickscfg generated with DEV, QA, and PROD profiles"
+          Write-Host "📍 Config file location: $env:USERPROFILE\.databrickscfg"
 
       - name: Run prerequisites Python script
         shell: pwsh
@@ -95,17 +115,20 @@ jobs:
           ENV_NAME: ${{ env.ENV_NAME }}
           DATABRICKS_CONFIG_PROFILE: ${{ env.ENV_NAME }}
         run: |
-          Write-Host "Running prerequisites.py for $env:ENV_NAME..."
+          Write-Host "🔧 Running prerequisites.py for $env:ENV_NAME environment..."
 
-          # Resolve host based on ENV_NAME
-          $databricksHost = if ($env:ENV_NAME -eq "PROD") { 
-            "${{ vars.PROD_DATABRICKS_HOST }}" 
-          } else { 
-            "${{ vars.UAT_DATABRICKS_HOST }}" 
-          }  
-          
+          # Resolve host and token based on ENV_NAME
+          $databricksHost = switch ($env:ENV_NAME) {
+            "PROD" { "${{ vars.PROD_DATABRICKS_HOST }}" }
+            "QA"   { "${{ vars.QA_DATABRICKS_HOST }}" }
+            "DEV"  { "${{ vars.DEV_DATABRICKS_HOST || vars.QA_DATABRICKS_HOST }}" }
+            default { "${{ vars.QA_DATABRICKS_HOST }}" }
+          }
+
           $databricksToken = "${{ secrets.DATABRICKS_TOKEN }}"
-          
+
+          Write-Host "📍 Target Workspace: $databricksHost"
+
           # Run script with CLI args
           python .github/workflows/prerequisites.py `
             --DATABRICKS_HOST "$databricksHost" `
@@ -118,29 +141,45 @@ jobs:
           )
           foreach ($f in $files) {
             if (Test-Path $f) {
-              Write-Host "✅ $f generated"
+              Write-Host "✅ $f generated successfully"
             } else {
-              Write-Host "::error::$f missing!"
+              Write-Host "::error::❌ Required file missing: $f"
               exit 1
             }
           }
+          Write-Host "✅ All prerequisite files generated successfully"
 
-      - name: Commit generated files (if changed)
-        shell: pwsh
-        run: |
-          git add AMALDAB/resources/
-          $gitStatus = git status --porcelain
-          if ($gitStatus) {
-            git commit -m "chore(deploy): auto-generate configs for ${{ env.ENV_NAME }}"
-            git push
-            Write-Host "✅ Pushed generated configs"
-          } else {
-            Write-Host "➡️ No changes to commit"
-          }
+      # Upload generated configs as artifacts instead of committing
+      - name: Upload generated configs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: databricks-configs-${{ env.ENV_NAME }}
+          path: |
+            AMALDAB/resources/SharedObjects/*.yml
+            AMALDAB/resources/uc_ddl/*.sql
+          retention-days: 30
+          if-no-files-found: warn
+
+      # Optional: Uncomment to commit generated files (NOT RECOMMENDED for production)
+      # - name: Commit generated files (if changed)
+      #   shell: pwsh
+      #   run: |
+      #     git add AMALDAB/resources/
+      #     $gitStatus = git status --porcelain
+      #     if ($gitStatus) {
+      #       git commit -m "chore(deploy): auto-generate configs for ${{ env.ENV_NAME }}"
+      #       git push
+      #       Write-Host "✅ Pushed generated configs"
+      #     } else {
+      #       Write-Host "➡️ No changes to commit"
+      #     }
 
   deploy-notebooks:
     runs-on: windows-latest
     needs: run-prerequisites
+    # Add environment protection for PROD deployments
+    environment:
+      name: ${{ needs.run-prerequisites.outputs.env_name == 'PROD' && 'production' || needs.run-prerequisites.outputs.env_name }}
     env:
       ENV_NAME: ${{ needs.run-prerequisites.outputs.env_name }}
     steps:
@@ -152,35 +191,67 @@ jobs:
       - name: Install Databricks CLI
         shell: pwsh
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          choco install databricks-cli -y
+          Write-Host "📦 Installing Databricks CLI..."
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.ps1 | pwsh
+          databricks --version
+          Write-Host "✅ Databricks CLI installed successfully"
+
+      - name: Download generated configs
+        uses: actions/download-artifact@v4
+        with:
+          name: databricks-configs-${{ env.ENV_NAME }}
+          path: AMALDAB/resources/
 
       - name: Generate Databricks config for deployment
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
-          @"
-          [DEV]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
-          
-          [UAT]
-          host = "${{ vars.QA_DATABRICKS_HOST }}"
-          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
-          
-          [PROD]
-          host = "${{ vars.PROD_DATABRICKS_HOST }}"
-          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
-          client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
-          
-          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
-          databricks auth profiles
+          Write-Host "🔐 Generating Databricks authentication configuration..."
+          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks | Out-Null
+
+          # Create config file with proper formatting
+          "[DEV]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_id = ${{ vars.DEV_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_secret = ${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "[QA]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_id = ${{ vars.QA_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_secret = ${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "[PROD]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "host = ${{ vars.PROD_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_id = ${{ vars.PROD_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+          "client_secret = ${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
+
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F" | Out-Null
+
           Write-Host "✅ .databrickscfg generated for deployment"
+          Write-Host "📍 Config file location: $env:USERPROFILE\.databrickscfg"
+
+      - name: Validate Databricks bundle
+        shell: pwsh
+        env:
+          DATABRICKS_CONFIG_PROFILE: ${{ needs.run-prerequisites.outputs.env_name }}
+        run: |
+          cd AMALDAB
+          Write-Host "🔍 Validating bundle for target: $env:DATABRICKS_CONFIG_PROFILE"
+
+          databricks bundle validate --target $env:DATABRICKS_CONFIG_PROFILE
+
+          Write-Host "✅ Bundle validation successful"
+
+      - name: Test authentication
+        shell: pwsh
+        env:
+          DATABRICKS_CONFIG_PROFILE: ${{ needs.run-prerequisites.outputs.env_name }}
+        run: |
+          Write-Host "🔐 Testing authentication for $env:DATABRICKS_CONFIG_PROFILE..."
+
+          # Test authentication by listing workspaces or getting current user
+          databricks auth env --profile $env:DATABRICKS_CONFIG_PROFILE
+
+          Write-Host "✅ Authentication successful"
 
       - name: Deploy Databricks bundle
         shell: pwsh
@@ -188,15 +259,29 @@ jobs:
           DATABRICKS_CONFIG_PROFILE: ${{ needs.run-prerequisites.outputs.env_name }}
         run: |
           cd AMALDAB
-          Write-Host "Deploying to target: $env:DATABRICKS_CONFIG_PROFILE"
+          Write-Host "=" * 70
+          Write-Host "🚀 Deploying to target: $env:DATABRICKS_CONFIG_PROFILE"
+          Write-Host "=" * 70
 
-          # Test auth
-          databricks auth profiles
-          databricks clusters list --output JSON | ConvertFrom-Json | Select-Object -First 1
-          Write-Host "✅ Auth successful"
+          # Deploy bundle
+          databricks bundle deploy --target $env:DATABRICKS_CONFIG_PROFILE
 
-          # Install & deploy
-          databricks bundle install
-          databricks bundle deploy
+          Write-Host "=" * 70
+          Write-Host "✅ Deployment completed successfully for $env:DATABRICKS_CONFIG_PROFILE"
+          Write-Host "=" * 70
 
-          Write-Host "✅ Deployment completed for $env:DATABRICKS_CONFIG_PROFILE"
+      - name: Deployment Summary
+        if: always()
+        shell: pwsh
+        env:
+          ENV_NAME: ${{ needs.run-prerequisites.outputs.env_name }}
+        run: |
+          Write-Host ""
+          Write-Host "=" * 70
+          Write-Host "📊 DEPLOYMENT SUMMARY"
+          Write-Host "=" * 70
+          Write-Host "🎯 Environment: $env:ENV_NAME"
+          Write-Host "📅 Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          Write-Host "👤 Triggered by: ${{ github.actor }}"
+          Write-Host "🔗 Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          Write-Host "=" * 70
