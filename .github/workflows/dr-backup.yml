@@ -224,7 +224,7 @@ jobs:
       - name: Run full backup script
         env:
           DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.QA_DATABRICKS_TOKEN }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           echo "🔧 Running full backup for QA environment..."
           echo "📍 Workspace: ${DATABRICKS_HOST}"
@@ -336,7 +336,7 @@ jobs:
       - name: Run full backup script
         env:
           DATABRICKS_HOST: ${{ vars.PROD_DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.PROD_DATABRICKS_TOKEN }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           echo "🔧 Running full backup for PROD environment..."
           echo "📍 Workspace: ${DATABRICKS_HOST}"
