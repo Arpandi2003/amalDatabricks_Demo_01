@@ -24,7 +24,18 @@ def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description='Databricks Disaster Recovery Backup Script',
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  # Standard backup (shared objects only)
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --DATABRICKS_TOKEN dapi123
+
+  # Full DR backup (all objects including jobs)
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --DATABRICKS_TOKEN dapi123 --full-backup
+
+  # Full backup with custom output directory
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --DATABRICKS_TOKEN dapi123 --full-backup --output-dir ./backups/prod
+        '''
     )
     parser.add_argument(
         '--DATABRICKS_HOST',
@@ -35,6 +46,16 @@ def parse_arguments():
         '--DATABRICKS_TOKEN',
         required=True,
         help='Databricks Personal Access Token or OAuth token'
+    )
+    parser.add_argument(
+        '--full-backup',
+        action='store_true',
+        help='Enable full backup mode: includes ALL clusters (not just shared), all jobs, and notebook metadata'
+    )
+    parser.add_argument(
+        '--output-dir',
+        default='./AMALDAB/resources',
+        help='Output directory for backup files (default: ./AMALDAB/resources)'
     )
     return parser.parse_args()
 
@@ -127,10 +148,24 @@ def sanitize_dict(d: Dict[str, Any], exclude_keys: List[str]) -> Dict[str, Any]:
 # 📥 FETCHERS — INFRASTRUCTURE
 # ===================================================================
 
-def get_all_clusters() -> List[Dict]:
+def get_all_clusters(include_job_clusters: bool = False) -> List[Dict]:
+    """
+    Get all clusters from workspace.
+
+    Args:
+        include_job_clusters: If True, includes job clusters. If False, only shared/all-purpose clusters.
+
+    Returns:
+        List of cluster configurations
+    """
     url = f"{get_databricks_instance()}/api/2.0/clusters/list"
     data = api_get(url)
-    return [c for c in data.get("clusters", []) if c.get("cluster_source") != "JOB"]
+    clusters = data.get("clusters", [])
+
+    if include_job_clusters:
+        return clusters  # Return all clusters including job clusters
+    else:
+        return [c for c in clusters if c.get("cluster_source") != "JOB"]  # Only shared clusters
 
 def get_cluster_policies() -> List[Dict]:
     url = f"{get_databricks_instance()}/api/2.0/policies/clusters/list"
@@ -152,16 +187,29 @@ def get_external_locations() -> List[Dict]:
     data = api_get(url)
     return data.get("external_locations", [])
 
-# def get_jobs() -> List[Dict]:
-#     url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100"
-#     data = api_get(url)
-#     jobs = data.get("jobs", [])
-#     # Paginate if needed
-#     while data.get("has_more"):
-#         offset = data["limit"] + data.get("offset", 0)
-#         data = api_get(f"{url}&offset={offset}")
-#         jobs.extend(data.get("jobs", []))
-#     return jobs
+def get_jobs() -> List[Dict]:
+    """
+    Get all jobs from workspace with pagination support.
+
+    Returns:
+        List of job configurations with expanded task details
+    """
+    url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100"
+    try:
+        data = api_get(url)
+        jobs = data.get("jobs", [])
+
+        # Paginate if needed
+        while data.get("has_more"):
+            offset = len(jobs)
+            paginated_url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100&offset={offset}"
+            data = api_get(paginated_url)
+            jobs.extend(data.get("jobs", []))
+
+        return jobs
+    except Exception as e:
+        print(f"⚠️ Warning: Could not fetch jobs: {e}")
+        return []
 
 def get_connections() -> List[Dict]:
     # Note: Connections API is /2.0/, NOT /2.1/unity-catalog/
@@ -408,32 +456,45 @@ def main():
     # Parse command line arguments first
     _ARGS = parse_arguments()
 
+    # Determine backup mode
+    full_backup = _ARGS.full_backup
+    output_base = _ARGS.output_dir
+
+    backup_mode = "FULL DISASTER RECOVERY" if full_backup else "STANDARD (Shared Objects Only)"
+
     print("=" * 70)
-    print("🚀 Starting Databricks DR Configuration Backup")
+    print("🚀 Starting Databricks Configuration Backup")
     print("=" * 70)
     print(f"📍 Workspace: {get_databricks_instance()}")
-    print(f"📁 Output Directory: ./AMALDAB/resources/")
+    print(f"📁 Output Directory: {output_base}")
+    print(f"🔧 Backup Mode: {backup_mode}")
     print("=" * 70)
 
-    base_dir = "./AMALDAB/resources/SharedObjects"
-    ddl_dir = "./AMALDAB/resources/uc_ddl"
+    base_dir = f"{output_base}/SharedObjects"
+    ddl_dir = f"{output_base}/uc_ddl"
+    jobs_dir = f"{output_base}/jobs" if full_backup else None
 
     # ===== 1. INFRASTRUCTURE =====
-    print("\n Fetching infrastructure...")
-    clusters = get_all_clusters()
+    print("\n📦 Fetching infrastructure...")
+
+    # Get clusters (all or shared only based on mode)
+    clusters = get_all_clusters(include_job_clusters=full_backup)
     policies = get_cluster_policies()
     warehouses = get_sql_warehouses()
     scs = get_storage_credentials()
     els = get_external_locations()
-    # jobs = get_jobs()
     connections = get_connections()
 
-    print(f"   • Clusters: {len(clusters)}")
+    # Get jobs only in full backup mode
+    jobs = get_jobs() if full_backup else []
+
+    print(f"   • Clusters: {len(clusters)} {'(including job clusters)' if full_backup else '(shared only)'}")
     print(f"   • Policies: {len(policies)}")
     print(f"   • SQL Warehouses: {len(warehouses)}")
     print(f"   • Storage Credentials: {len(scs)}")
     print(f"   • External Locations: {len(els)}")
-    # print(f"   • Jobs: {len(jobs)}")
+    if full_backup:
+        print(f"   • Jobs: {len(jobs)}")
     print(f"   • Connections (sanitized): {len(connections)}")
 
     resources = {}
@@ -460,9 +521,12 @@ def main():
         resources["external_locations"] = {convert_el(el)[0]: convert_el(el)[1] for el in els}
         safe_write_yml(f"{base_dir}/external_locations.yml", {"resources": {"external_locations": resources["external_locations"]}})
 
-    # if jobs:
-    #     resources["jobs"] = {convert_job(j)[0]: convert_job(j)[1] for j in jobs}
-    #     safe_write_yml(f"{base_dir}/jobs.yml", {"resources": {"jobs": resources["jobs"]}})
+    # Jobs - only in full backup mode
+    if jobs and full_backup:
+        print(f"\n💼 Processing {len(jobs)} jobs...")
+        resources["jobs"] = {convert_job(j)[0]: convert_job(j)[1] for j in jobs}
+        safe_write_yml(f"{jobs_dir}/all_jobs.yml", {"resources": {"jobs": resources["jobs"]}})
+        print(f"   ✅ Saved {len(jobs)} jobs to {jobs_dir}/all_jobs.yml")
 
     if connections:
         resources["connections"] = {convert_connection(c)[0]: convert_connection(c)[1] for c in connections}
@@ -524,11 +588,23 @@ def main():
         safe_write_sql(f"{ddl_dir}/99_grants.ddl.sql", "\n".join(grant_statements))
 
     print("\n" + "=" * 70)
-    print("✅ DR backup completed successfully!")
+    print("✅ Backup completed successfully!")
     print("=" * 70)
+    print(f"🔧 Backup Mode: {backup_mode}")
     print(f"📦 Bundle configs: {base_dir}")
     print(f"📜 UC DDL & grants: {ddl_dir}")
+    if full_backup and jobs:
+        print(f"💼 Jobs: {jobs_dir}")
     print("=" * 70)
+
+    if full_backup:
+        print("\n📋 Full Backup Summary:")
+        print(f"   • Total Clusters: {len(clusters)} (including job clusters)")
+        print(f"   • Total Jobs: {len(jobs)}")
+        print(f"   • SQL Warehouses: {len(warehouses)}")
+        print(f"   • Cluster Policies: {len(policies)}")
+        print(f"   • Unity Catalog Objects: {total_uc_objects}")
+        print("=" * 70)
 
 if __name__ == "__main__":
     try:
