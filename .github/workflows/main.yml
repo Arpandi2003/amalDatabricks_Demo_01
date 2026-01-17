@@ -85,29 +85,27 @@ jobs:
       - name: Generate Databricks config file
         shell: pwsh
         run: |
-          Write-Host "🔐 Generating Databricks authentication configuration..."
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks | Out-Null
-
-          # Create config file with proper formatting
-          "[DEV]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_id = ${{ vars.DEV_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_secret = ${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "[QA]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_id = ${{ vars.QA_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_secret = ${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "[PROD]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "host = ${{ vars.PROD_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_id = ${{ vars.PROD_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_secret = ${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F" | Out-Null
-
-          Write-Host "✅ .databrickscfg generated with DEV, QA, and PROD profiles"
-          Write-Host "📍 Config file location: $env:USERPROFILE\.databrickscfg"
+          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
+          @"
+          [DEV]
+          host = "${{ vars.QA_DATABRICKS_HOST }}"
+          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
+          
+          [QA]
+          host = "${{ vars.QA_DATABRICKS_HOST }}"
+          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
+          
+          [PROD]
+          host = "${{ vars.PROD_DATABRICKS_HOST }}"
+          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
+          
+          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
+          databricks auth profiles
+          Write-Host "✅ .databrickscfg generated with UAT and PROD profiles"
 
       - name: Run prerequisites Python script
         shell: pwsh
@@ -205,29 +203,27 @@ jobs:
       - name: Generate Databricks config for deployment
         shell: pwsh
         run: |
-          Write-Host "🔐 Generating Databricks authentication configuration..."
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks | Out-Null
-
-          # Create config file with proper formatting
-          "[DEV]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
-          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_id = ${{ vars.DEV_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_secret = ${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "[QA]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "host = ${{ vars.QA_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_id = ${{ vars.QA_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_secret = ${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "[PROD]" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "host = ${{ vars.PROD_DATABRICKS_HOST }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_id = ${{ vars.PROD_DATABRICKS_CLIENT_ID }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-          "client_secret = ${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}" | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8 -Append
-
-          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F" | Out-Null
-
-          Write-Host "✅ .databrickscfg generated for deployment"
-          Write-Host "📍 Config file location: $env:USERPROFILE\.databrickscfg"
+          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.databricks
+          @"
+          [DEV]
+          host = "${{ vars.QA_DATABRICKS_HOST }}"
+          client_id = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
+          
+          [QA]
+          host = "${{ vars.QA_DATABRICKS_HOST }}"
+          client_id = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
+          
+          [PROD]
+          host = "${{ vars.PROD_DATABRICKS_HOST }}"
+          client_id = "${{ vars.PROD_DATABRICKS_CLIENT_ID }}"
+          client_secret = "${{ secrets.PROD_DATABRICKS_CLIENT_SECRET }}"
+          
+          "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
+          icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME:F"
+          databricks auth profiles
+          Write-Host "✅ .databrickscfg generated with UAT and PROD profiles"
 
       - name: Validate Databricks bundle
         shell: pwsh
