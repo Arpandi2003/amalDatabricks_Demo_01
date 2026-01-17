@@ -211,7 +211,7 @@ jobs:
           "@ | Out-File -FilePath "$env:USERPROFILE\.databrickscfg" -Encoding utf8
           icacls "$env:USERPROFILE\.databrickscfg" /inheritance:r /grant:r "$env:USERNAME`:F"
           
-          Write-Host "Testing Databricks authentication for profile: $profileName"
+          Write-Host "Testing Databricks authentication for profile: $env:host"
           databricks --profile $profileName workspace list --page-size 1
           databricks auth profiles
 
