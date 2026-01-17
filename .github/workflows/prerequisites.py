@@ -603,7 +603,7 @@ def main():
         print(f"   • Total Jobs: {len(jobs)}")
         print(f"   • SQL Warehouses: {len(warehouses)}")
         print(f"   • Cluster Policies: {len(policies)}")
-        print(f"   • Unity Catalog Objects: {total_uc_objects}")
+        # print(f"   • Unity Catalog Objects: {total_uc_objects}")
         print("=" * 70)
 
 if __name__ == "__main__":
