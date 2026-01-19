@@ -10,7 +10,7 @@ on:
         options:
           - AUTO
           - DEV
-          - QA
+          - UAT
           - PROD
         default: 'AUTO'
   push:
@@ -89,8 +89,8 @@ jobs:
             if ($branch -eq "refs/heads/main") {
               $targetEnv = "PROD"
             }
-            elseif ($branch -eq "refs/heads/qa") {
-              $targetEnv = "QA"
+            elseif ($branch -eq "refs/heads/qa" -or $branch -eq "refs/heads/uat") {
+              $targetEnv = "uat"
             }
             elseif ($branch -eq "refs/heads/dev") {
               $targetEnv = "DEV"
@@ -163,8 +163,12 @@ jobs:
               $employeeFlagPath = '/Volumes/ab_dev_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
               $marketingSourceSystem = 'NYHQ_PROD'
             }
-            'QA' {
-              $employeeFlagPath = '/Volumes/ab_qa_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+            'uat' {
+              $employeeFlagPath = '/Volumes/ab_uat_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+              $marketingSourceSystem = 'NYHQ_PROD'
+            }
+            'UAT' {
+              $employeeFlagPath = '/Volumes/ab_uat_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
               $marketingSourceSystem = 'NYHQ_PROD'
             }
             'PROD' {
@@ -308,10 +312,10 @@ jobs:
               $clientId = "${{ vars.DEV_DATABRICKS_CLIENT_ID }}"
               $clientSecret = "${{ secrets.DEV_DATABRICKS_CLIENT_SECRET }}"
             }
-            'QA' {
-              $databricksHost = "${{ vars.QA_DATABRICKS_HOST }}"
-              $clientId = "${{ vars.QA_DATABRICKS_CLIENT_ID }}"
-              $clientSecret = "${{ secrets.QA_DATABRICKS_CLIENT_SECRET }}"
+            { $_ -in 'uat', 'UAT' } {
+              $databricksHost = "${{ vars.UAT_DATABRICKS_HOST }}"
+              $clientId = "${{ vars.UAT_DATABRICKS_CLIENT_ID }}"
+              $clientSecret = "${{ secrets.UAT_DATABRICKS_CLIENT_SECRET }}"
             }
             'PROD' {
               $databricksHost = "${{ vars.PROD_DATABRICKS_HOST }}"
@@ -458,7 +462,7 @@ jobs:
           # Determine workspace path based on environment
           $workspacePath = switch ($env:TARGET_ENV) {
             'DEV' { "/Workspace/AMAL_DEV/DEV" }
-            'QA' { "/Workspace/QA" }
+            { $_ -in 'uat', 'UAT' } { "/Workspace/uat" }
             'PROD' { "/Workspace/PROD" }
             default { "/Workspace/$env:TARGET_ENV" }
           }
