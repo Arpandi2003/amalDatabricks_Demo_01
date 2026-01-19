@@ -95,7 +95,7 @@ targets:
     variables:
       # Unity Catalog configuration
       catalog_name:
-        default: ab_qa_catalog
+        default: ab_uat_catalog
 
       # Azure Key Vault configuration
       key_vault_scope:
@@ -103,19 +103,19 @@ targets:
 
       # Logger configuration
       logger_directory:
-        default: /Volumes/ab_qa_catalog/config/logger
+        default: /Volumes/ab_uat_catalog/config/logger
 
       # Axiom storage paths
       axiom_archive:
-        default: abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/archive/axiom/
+        default: abfss://uat-external-location@stgazdbricksqa001.dfs.core.windows.net/archive/axiom/
       axiom_input:
-        default: abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/input/axiom/
+        default: abfss://uat-external-location@stgazdbricksqa001.dfs.core.windows.net/input/axiom/
       axiom_volume:
-        default: /Volumes/ab_qa_catalog/config/axiom/
+        default: /Volumes/ab_uat_catalog/config/axiom/
 
       # Employee flag path
       employee_flag_path:
-        default: /Volumes/ab_qa_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
+        default: /Volumes/ab_uat_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
 
       # Marketing source system
       marketing_source_system:
@@ -127,7 +127,7 @@ targets:
 
       # Git branch
       git_branch:
-        default: qa
+        default: QA
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
