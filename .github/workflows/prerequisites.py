@@ -658,9 +658,19 @@ def main():
     # Jobs - only in full backup mode
     if jobs and full_backup:
         print(f"\n💼 Processing {len(jobs)} jobs...")
-        resources["jobs"] = {convert_job(j)[0]: convert_job(j)[1] for j in jobs}
-        safe_write_yml(f"{jobs_dir}/all_jobs.yml", {"resources": {"jobs": resources["jobs"]}})
-        print(f"   ✅ Saved {len(jobs)} jobs to {jobs_dir}/all_jobs.yml")
+        resources["jobs"] = {}
+
+        # Create separate file for each job
+        for job in jobs:
+            job_name, job_config = convert_job(job)
+            resources["jobs"][job_name] = job_config
+
+            # Write each job to its own file
+            job_file_path = f"{jobs_dir}/{job_name}.job.yml"
+            safe_write_yml(job_file_path, {"resources": {"jobs": {job_name: job_config}}})
+            print(f"   ✅ Saved job '{job_name}' to {job_file_path}")
+
+        print(f"   ✅ Total: {len(jobs)} jobs saved as individual files")
 
     if connections:
         resources["connections"] = {convert_connection(c)[0]: convert_connection(c)[1] for c in connections}

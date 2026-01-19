@@ -253,15 +253,23 @@ jobs:
             echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
             git fetch origin "${BRANCH_NAME}"
             git checkout "${BRANCH_NAME}"
+            # Remove all existing files
+            git rm -rf . 2>/dev/null || true
           else
             echo "🆕 Creating new branch ${BRANCH_NAME}..."
             git checkout --orphan "${BRANCH_NAME}"
             git rm -rf . 2>/dev/null || true
           fi
 
-          # Copy backup files to root
+          # Copy backup files to root (only the backup directory contents)
           cp -r "${BACKUP_DIR}"/* .
-          git add .
+
+          # Add only the backup files (not the backup directory itself)
+          git add -A
+
+          # Verify what we're committing
+          echo "📋 Files to be committed:"
+          git status --short
 
           # Commit with detailed message
           git commit -m "DR Backup DEV ${TIMESTAMP}" \
@@ -284,12 +292,15 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          # Return to main branch
-          git checkout main 2>/dev/null || git checkout DEV 2>/dev/null || git checkout dev 2>/dev/null || true
+          # Return to original branch
+          git checkout ${{ github.ref_name }} 2>/dev/null || git checkout DEV 2>/dev/null || true
 
           # Clean up ALL backup artifacts to keep main repository clean
           rm -rf dr-backups/ 2>/dev/null || true
           rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Remove any backup files that might have been copied to root during git operations
+          rm -rf jobs/ uc_ddl/ SharedObjects/ backup-metadata.json README.md 2>/dev/null || true
 
           # Verify cleanup
           if [ -d "dr-backups" ]; then
@@ -297,6 +308,8 @@ jobs:
           else
             echo "✅ Main repository is clean (no backup artifacts)"
           fi
+
+          echo "✅ All backup artifacts cleaned from working directory"
 
           echo "✅ Cleanup completed"
 
@@ -524,12 +537,15 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          # Return to main branch
-          git checkout main 2>/dev/null || git checkout DEV 2>/dev/null || git checkout dev 2>/dev/null || true
+          # Return to original branch
+          git checkout ${{ github.ref_name }} 2>/dev/null || git checkout DEV 2>/dev/null || true
 
           # Clean up ALL backup artifacts to keep main repository clean
           rm -rf dr-backups/ 2>/dev/null || true
           rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Remove any backup files that might have been copied to root during git operations
+          rm -rf jobs/ uc_ddl/ SharedObjects/ backup-metadata.json README.md 2>/dev/null || true
 
           # Verify cleanup
           if [ -d "dr-backups" ]; then
@@ -538,7 +554,7 @@ jobs:
             echo "✅ Main repository is clean (no backup artifacts)"
           fi
 
-          echo "✅ Cleanup completed"
+          echo "✅ All backup artifacts cleaned from working directory"
 
   # ============================================================================
   # JOB 3: Backup PROD Environment
@@ -765,12 +781,15 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          # Return to main branch
-          git checkout main 2>/dev/null || git checkout DEV 2>/dev/null || git checkout dev 2>/dev/null || true
+          # Return to original branch
+          git checkout ${{ github.ref_name }} 2>/dev/null || git checkout main 2>/dev/null || true
 
           # Clean up ALL backup artifacts to keep main repository clean
           rm -rf dr-backups/ 2>/dev/null || true
           rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Remove any backup files that might have been copied to root during git operations
+          rm -rf jobs/ uc_ddl/ SharedObjects/ backup-metadata.json README.md 2>/dev/null || true
 
           # Verify cleanup
           if [ -d "dr-backups" ]; then
@@ -779,7 +798,7 @@ jobs:
             echo "✅ Main repository is clean (no backup artifacts)"
           fi
 
-          echo "✅ Cleanup completed"
+          echo "✅ All backup artifacts cleaned from working directory"
 
   # ============================================================================
   # JOB 4: Backup Summary
