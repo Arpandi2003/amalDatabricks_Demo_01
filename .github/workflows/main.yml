@@ -6,17 +6,46 @@ on:
   #   branches:
   #     - main
   #     - dev
-  paths:
-    - amalDatabricks_Demo_01/**
-    - resources/**
-    - config/**
-    - DataPlatform/**
-    - .github/workflows/**
-    - databricks.yml
+  # paths:
+  #   - amalDatabricks_Demo_01/**
+  #   - resources/**
+  #   - config/**
+  #   - DataPlatform/**
+  #   - .github/workflows/**
+  #   - databricks.yml
 
 jobs:
+  UnitTesting:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell YAML module
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Install-Module powershell-yaml -Force -Scope CurrentUser -AllowClobber
+          Import-Module powershell-yaml -ErrorAction Stop
+
+      - name: Enforce bundle config policies
+        run: |
+          Write-Host "🔍 Running bundle policy validator..."
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+          $scriptPath = ".github/workflows/validate-bundle.ps1"
+          if (-not (Test-Path $scriptPath)) {
+            Write-Error "❌ Script NOT found at: $scriptPath"
+            exit 1
+          }
+          Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
+          & $scriptPath -BundleDir "AMALDAB"
+          Write-Host "✅ Policy check passed."
+
   deploy-notebooks:
     runs-on: windows-latest
+    needs: UnitTesting
     steps:
       # Step 1: Checkout the repository
       - name: Checkout repository
@@ -24,7 +53,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Step 2: Install PowerShell YAML module for config update
+      # Step 2: Install PowerShell YAML module
       - name: Install PowerShell YAML module
         shell: pwsh
         run: |
@@ -34,36 +63,68 @@ jobs:
           Import-Module powershell-yaml -ErrorAction Stop
           Write-Host "✅ PowerShell YAML module installed"
 
-      # Step 3: Update NB_Configuration.py with environment-specific values
+      # Step 3: Update NB_Configuration.py with inline regex replacement
       - name: Update NB_Configuration.py
         shell: pwsh
         run: |
-          Write-Host "🔧 Updating NB_Configuration.py with environment-specific values from databricks.yml..."
-          
-          # Set execution policy for this session
-          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
-          
-          # Unblock the script
-          $scriptPath = ".github/workflows/update-config.ps1"
-          if (Test-Path $scriptPath) {
-            Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
-          }
-          
-          # Run the update script for QA environment (change to DEV or PROD as needed)
-          try {
-            & $scriptPath -Environment "QA" -BundleDir "AMALDAB" -ConfigFile "AMALDAB/DataPlatform/General/NB_Configuration.py"
-            
-            if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-              Write-Error "❌ Configuration update failed with exit code: $LASTEXITCODE"
-              exit $LASTEXITCODE
+          Write-Host "🔧 Updating NB_Configuration.py with environment-specific values..."
+
+          # Import YAML module
+          Import-Module powershell-yaml -ErrorAction Stop
+
+          # Read databricks.yml
+          $bundleYamlPath = "AMALDAB/databricks.yml"
+          $yamlContent = Get-Content $bundleYamlPath -Raw
+          $config = ConvertFrom-Yaml $yamlContent
+
+          # Target environment (QA - change as needed)
+          $targetEnv = "QA"
+          $variables = $config.targets.$targetEnv.variables
+
+          # Extract values
+          $keyVaultScope = if ($variables.key_vault_scope.default) { $variables.key_vault_scope.default } else { $variables.key_vault_scope }
+          $catalogName = if ($variables.catalog_name.default) { $variables.catalog_name.default } else { $variables.catalog_name }
+          $loggerDirectory = if ($variables.logger_directory.default) { $variables.logger_directory.default } else { $variables.logger_directory }
+          $axiomArchive = if ($variables.axiom_archive.default) { $variables.axiom_archive.default } else { $variables.axiom_archive }
+          $axiomInput = if ($variables.axiom_input.default) { $variables.axiom_input.default } else { $variables.axiom_input }
+          $axiomVolume = if ($variables.axiom_volume.default) { $variables.axiom_volume.default } else { $variables.axiom_volume }
+
+          # Environment-specific values (notebook-only)
+          switch ($targetEnv) {
+            'DEV' {
+              $employeeFlagPath = '/Volumes/ab_dev_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+              $marketingSourceSystem = 'NYHQ_PROD'
             }
-            
-            Write-Host "✅ Configuration update completed successfully"
+            'QA' {
+              $employeeFlagPath = '/Volumes/ab_qa_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+              $marketingSourceSystem = 'NYHQ_PROD'
+            }
+            'PROD' {
+              $employeeFlagPath = '/Volumes/ab_prod_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+              $marketingSourceSystem = 'NYHQ_PROD'
+            }
           }
-          catch {
-            Write-Error "❌ Configuration update failed: $_"
-            exit 1
-          }
+
+          Write-Host "✅ Extracted variables for $targetEnv environment"
+
+          # Read configuration file
+          $configFile = "AMALDAB/DataPlatform/General/NB_Configuration.py"
+          $content = Get-Content $configFile -Raw
+
+          # Apply regex replacements
+          $content = $content -replace "scope='[^']*'", "scope='$keyVaultScope'"
+          $content = $content -replace "catalog='[^']*'", "catalog='$catalogName'"
+          $content = $content -replace "logger_directory='[^']*'", "logger_directory='$loggerDirectory'"
+          $content = $content -replace "axiom_archive = '[^']*'", "axiom_archive = '$axiomArchive'"
+          $content = $content -replace "axiom_input = '[^']*'", "axiom_input = '$axiomInput'"
+          $content = $content -replace 'axiom_volume="[^"]*"', "axiom_volume=`"$axiomVolume`""
+          $content = $content -replace "employee_flag_path='[^']*'", "employee_flag_path='$employeeFlagPath'"
+          $content = $content -replace "marketing_source_system = '[^']*'", "marketing_source_system = '$marketingSourceSystem'"
+
+          # Write back to file
+          $content | Set-Content $configFile -NoNewline
+
+          Write-Host "✅ Configuration file updated successfully!"
 
       # Step 4: Install Databricks CLI
       - name: Install Databricks CLI
@@ -130,16 +191,52 @@ jobs:
           DATABRICKS_CONFIG_PROFILE: QA
         run: |
           cd AMALDAB
-          
+
           echo "Current directory: $(Get-Location)"
           echo "Files in current directory:"
           Get-ChildItem
-          
+
           # Validate bundle
           databricks bundle validate -t QA
-          
+
           # Deploy bundle
           databricks bundle deploy -t QA
-          
-          echo "Deployment completed successfully!"
+
+          echo "✅ Deployment completed successfully!"
+
+      # Step 7: Sync workspace and remove deleted files
+      - name: Sync workspace with deletion
+        shell: pwsh
+        env:
+          DATABRICKS_CONFIG_PROFILE: QA
+        run: |
+          Write-Host "🔄 Syncing workspace and removing deleted files..."
+
+          # Set execution policy
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+
+          # Unblock the script
+          $scriptPath = ".github/workflows/sync-with-deletion.ps1"
+          if (-not (Test-Path $scriptPath)) {
+            Write-Warning "⚠️  Sync script not found at: $scriptPath - skipping sync"
+            exit 0
+          }
+
+          Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
+
+          # Run sync script
+          try {
+            & $scriptPath -SourceDir "AMALDAB" -WorkspacePath "/Workspace/AMAL_QA/QA" -Profile "QA"
+
+            if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+              Write-Error "❌ Sync with deletion failed with exit code: $LASTEXITCODE"
+              exit $LASTEXITCODE
+            }
+
+            Write-Host "✅ Workspace sync completed successfully"
+          }
+          catch {
+            Write-Error "❌ Sync with deletion failed: $_"
+            exit 1
+          }
 
