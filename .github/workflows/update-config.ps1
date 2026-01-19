@@ -45,8 +45,22 @@ $loggerDirectory = if ($variables.logger_directory.default) { $variables.logger_
 $axiomArchive = if ($variables.axiom_archive.default) { $variables.axiom_archive.default } else { $variables.axiom_archive }
 $axiomInput = if ($variables.axiom_input.default) { $variables.axiom_input.default } else { $variables.axiom_input }
 $axiomVolume = if ($variables.axiom_volume.default) { $variables.axiom_volume.default } else { $variables.axiom_volume }
-$employeeFlagPath = if ($variables.employee_flag_path.default) { $variables.employee_flag_path.default } else { $variables.employee_flag_path }
-$marketingSourceSystem = if ($variables.marketing_source_system.default) { $variables.marketing_source_system.default } else { $variables.marketing_source_system }
+
+# Environment-specific values not in databricks.yml (notebook-only configuration)
+switch ($Environment) {
+    'DEV' {
+        $employeeFlagPath = '/Volumes/ab_dev_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+        $marketingSourceSystem = 'NYHQ_PROD'
+    }
+    'QA' {
+        $employeeFlagPath = '/Volumes/ab_qa_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+        $marketingSourceSystem = 'NYHQ_PROD'
+    }
+    'PROD' {
+        $employeeFlagPath = '/Volumes/ab_prod_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+        $marketingSourceSystem = 'NYHQ_PROD'
+    }
+}
 
 Write-Host "✅ Extracted variables from databricks.yml:"
 Write-Host "   - Key Vault Scope: $keyVaultScope"

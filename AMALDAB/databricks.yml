@@ -54,14 +54,6 @@ targets:
       axiom_volume:
         default: /Volumes/ab_dev_catalog/config/axiom/
 
-      # Employee flag path
-      employee_flag_path:
-        default: /Volumes/ab_dev_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
-
-      # Marketing source system
-      marketing_source_system:
-        default: NYHQ_PROD
-
       # Notification configuration
       email_notifications:
         default: pandi.anbu@zeb.co
@@ -95,7 +87,7 @@ targets:
     variables:
       # Unity Catalog configuration
       catalog_name:
-        default: ab_uat_catalog
+        default: ab_qa_catalog
 
       # Azure Key Vault configuration
       key_vault_scope:
@@ -103,23 +95,15 @@ targets:
 
       # Logger configuration
       logger_directory:
-        default: /Volumes/ab_uat_catalog/config/logger
+        default: /Volumes/ab_qa_catalog/config/logger
 
       # Axiom storage paths
       axiom_archive:
-        default: abfss://uat-external-location@stgazdbricksqa001.dfs.core.windows.net/archive/axiom/
+        default: abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/archive/axiom/
       axiom_input:
-        default: abfss://uat-external-location@stgazdbricksqa001.dfs.core.windows.net/input/axiom/
+        default: abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/input/axiom/
       axiom_volume:
-        default: /Volumes/ab_uat_catalog/config/axiom/
-
-      # Employee flag path
-      employee_flag_path:
-        default: /Volumes/ab_uat_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
-
-      # Marketing source system
-      marketing_source_system:
-        default: NYHQ_PROD
+        default: /Volumes/ab_qa_catalog/config/axiom/
 
       # Notification configuration
       email_notifications:
@@ -127,7 +111,7 @@ targets:
 
       # Git branch
       git_branch:
-        default: QA
+        default: qa
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
@@ -170,14 +154,6 @@ targets:
         default: abfss://prod-external-location@stgazdbricksprod001.dfs.core.windows.net/input/axiom/
       axiom_volume:
         default: /Volumes/ab_prod_catalog/config/axiom/
-
-      # Employee flag path
-      employee_flag_path:
-        default: /Volumes/ab_prod_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
-
-      # Marketing source system
-      marketing_source_system:
-        default: NYHQ_PROD
 
       # Notification configuration
       email_notifications:
