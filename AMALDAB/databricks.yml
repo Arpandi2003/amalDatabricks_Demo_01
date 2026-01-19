@@ -3,6 +3,7 @@ bundle:
   name: amaldatabricks
   uuid: 98bee946-7642-4fd2-beb9-d89c27ed0c2c
 
+
 include:
   - resources/**/*.yml
   - resources/*.yml
@@ -34,8 +35,8 @@ variables:
     description: "Axiom volume path in Unity Catalog"
   email_notifications:
     description: "Email address for job notifications"
-  # git_branch:
-  #   description: "Git branch name"
+  git_branch:
+    description: "Git branch name"
 
 targets:
   DEV:
@@ -47,7 +48,7 @@ targets:
 
     presets:
       source_linked_deployment: false
-      name_prefix: '[dev]'
+      name_prefix: '[${workspace.current_user.short_name}]'
       tags:
         amal_owner: DataEngineering
         Environment: Dev
@@ -79,7 +80,7 @@ targets:
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
-      root_path: /Workspace/AMAL_DEV/${bundle.target}
+      root_path: ~/.bundle/${bundle.name}/${bundle.target}
 
     permissions:
       - group_name: DataEngineering
