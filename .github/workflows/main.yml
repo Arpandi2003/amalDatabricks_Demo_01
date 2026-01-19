@@ -459,15 +459,50 @@ jobs:
           # Set execution policy
           Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
 
-          # Determine workspace path based on environment
-          $workspacePath = switch ($env:TARGET_ENV) {
-            'DEV' { "/Workspace/AMAL_DEV/DEV" }
-            { $_ -in 'uat', 'UAT' } { "/Workspace/uat" }
-            'PROD' { "/Workspace/PROD" }
-            default { "/Workspace/$env:TARGET_ENV" }
+          # Load databricks.yml to get workspace path configuration
+          Write-Host "📖 Reading workspace path from databricks.yml..."
+
+          $databricksYmlPath = "AMALDAB/databricks.yml"
+          if (-not (Test-Path $databricksYmlPath)) {
+            Write-Error "❌ databricks.yml not found at: $databricksYmlPath"
+            exit 1
           }
 
-          Write-Host "📂 Workspace Path: $workspacePath"
+          # Parse YAML file
+          $yamlContent = Get-Content $databricksYmlPath -Raw | ConvertFrom-Yaml
+
+          # Get the target configuration
+          $targetConfig = $yamlContent.targets[$env:TARGET_ENV]
+          if (-not $targetConfig) {
+            Write-Error "❌ Target '$env:TARGET_ENV' not found in databricks.yml"
+            exit 1
+          }
+
+          # Get workspace root_path from databricks.yml
+          $rootPathTemplate = $targetConfig.workspace.root_path
+          Write-Host "📋 Root path template from databricks.yml: $rootPathTemplate"
+
+          # Get current user (Service Principal ID)
+          $currentUser = $env:DATABRICKS_CLIENT_ID
+          if (-not $currentUser) {
+            Write-Warning "⚠️  DATABRICKS_CLIENT_ID not set, using deployment identity"
+            $currentUser = switch ($env:TARGET_ENV) {
+              'DEV' { "${{ vars.DEV_DATABRICKS_CLIENT_ID }}" }
+              { $_ -in 'uat', 'UAT' } { "${{ vars.UAT_DATABRICKS_CLIENT_ID }}" }
+              'PROD' { "${{ vars.PROD_DATABRICKS_CLIENT_ID }}" }
+            }
+          }
+
+          # Get bundle name from databricks.yml
+          $bundleName = $yamlContent.bundle.name
+
+          # Replace template variables with actual values
+          $workspacePath = $rootPathTemplate `
+            -replace '\$\{workspace\.current_user\.userName\}', $currentUser `
+            -replace '\$\{bundle\.name\}', $bundleName `
+            -replace '\$\{bundle\.target\}', $env:TARGET_ENV
+
+          Write-Host "📂 Resolved Workspace Path: $workspacePath"
 
           # Check if sync script exists
           $scriptPath = ".github/workflows/sync-with-deletion.ps1"
@@ -479,8 +514,12 @@ jobs:
 
           Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
 
-          # Run sync script
+          # Run sync script with resolved workspace path
           try {
+            Write-Host "🔄 Running sync with deletion..."
+            Write-Host "   Source: AMALDAB/DataPlatform"
+            Write-Host "   Target: $workspacePath"
+
             & $scriptPath -Environment $env:TARGET_ENV -SourceDir "AMALDAB/DataPlatform" -WorkspacePath $workspacePath
 
             if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
