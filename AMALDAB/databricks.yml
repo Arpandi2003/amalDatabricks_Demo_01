@@ -58,10 +58,6 @@ targets:
       email_notifications:
         default: pandi.anbu@zeb.co
 
-      # Git branch
-      git_branch:
-        default: dev
-
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
       root_path: /Workspace/AMAL_DEV/${bundle.target}
@@ -110,8 +106,6 @@ targets:
         default: pandi.anbu@zeb.co
 
       # Git branch
-      git_branch:
-        default: uat
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
@@ -158,10 +152,6 @@ targets:
       # Notification configuration
       email_notifications:
         default: pandi.anbu@zeb.co
-
-      # Git branch
-      git_branch:
-        default: prod
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net

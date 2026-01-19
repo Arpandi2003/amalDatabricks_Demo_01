@@ -4,7 +4,7 @@ resources:
       name: "[dev dab] test_job_2"
       email_notifications:
         on_failure:
-          - vijayaramuprawin@avatest.in
+          - ${var.email_notifications}
       schedule:
         quartz_cron_expression: 19 0 8 * * ?
         timezone_id: America/New_York
