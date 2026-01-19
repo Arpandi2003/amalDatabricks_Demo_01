@@ -91,11 +91,11 @@ jobs:
       - name: Create backup directory structure
         run: |
           TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
-          BACKUP_DIR="dr-backups/DEV/${TIMESTAMP}"
+          BACKUP_DIR="dr-backups/DEV"
           echo "BACKUP_DIR=${BACKUP_DIR}" >> $GITHUB_ENV
           echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
           echo "ENV_NAME=DEV" >> $GITHUB_ENV
-          
+
           mkdir -p "${BACKUP_DIR}"
           echo "📁 Created backup directory: ${BACKUP_DIR}"
 
@@ -145,7 +145,7 @@ jobs:
             "workflow_run_id": "${{ github.run_id }}",
             "git_commit": "${{ github.sha }}",
             "backup_type": "full",
-            "branch_name": "dr-backups/DEV/${TIMESTAMP}"
+            "branch_name": "dr-backups/DEV"
           }
           EOF
 
@@ -179,7 +179,7 @@ jobs:
 
           1. **Checkout this backup branch**:
              \`\`\`bash
-             git checkout dr-backups/DEV/${TIMESTAMP}
+             git checkout dr-backups/DEV
              \`\`\`
 
           2. **Review the backup contents**:
@@ -235,7 +235,7 @@ jobs:
           **Backup Type**: Full DR Backup
           **Status**: ✅ Complete
           **Retention**: Unlimited (Git history)
-          **Branch**: dr-backups/DEV/${TIMESTAMP}
+          **Branch**: dr-backups/DEV
           EOF
 
           echo "✅ Created backup metadata and README"
@@ -245,14 +245,21 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create orphan branch for this backup
-          BRANCH_NAME="dr-backups/DEV/${TIMESTAMP}"
-          git checkout --orphan "${BRANCH_NAME}"
+          # Use static branch name for this environment
+          BRANCH_NAME="dr-backups/DEV"
 
-          # Remove all files from staging
-          git rm -rf . 2>/dev/null || true
+          # Check if branch exists
+          if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
+            echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
+            git fetch origin "${BRANCH_NAME}"
+            git checkout "${BRANCH_NAME}"
+          else
+            echo "🆕 Creating new branch ${BRANCH_NAME}..."
+            git checkout --orphan "${BRANCH_NAME}"
+            git rm -rf . 2>/dev/null || true
+          fi
 
-          # Add only the backup directory
+          # Copy backup files to root
           cp -r "${BACKUP_DIR}"/* .
           git add .
 
@@ -324,7 +331,7 @@ jobs:
       - name: Create backup directory structure
         run: |
           TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
-          BACKUP_DIR="dr-backups/QA/${TIMESTAMP}"
+          BACKUP_DIR="dr-backups/QA"
           echo "BACKUP_DIR=${BACKUP_DIR}" >> $GITHUB_ENV
           echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
           echo "ENV_NAME=QA" >> $GITHUB_ENV
@@ -378,7 +385,7 @@ jobs:
             "workflow_run_id": "${{ github.run_id }}",
             "git_commit": "${{ github.sha }}",
             "backup_type": "full",
-            "branch_name": "dr-backups/QA/${TIMESTAMP}"
+            "branch_name": "dr-backups/QA"
           }
           EOF
 
@@ -412,7 +419,7 @@ jobs:
 
           1. **Checkout this backup branch**:
              \`\`\`bash
-             git checkout dr-backups/QA/${TIMESTAMP}
+             git checkout dr-backups/QA
              \`\`\`
 
           2. **Review the backup contents**:
@@ -468,7 +475,7 @@ jobs:
           **Backup Type**: Full DR Backup
           **Status**: ✅ Complete
           **Retention**: Unlimited (Git history)
-          **Branch**: dr-backups/QA/${TIMESTAMP}
+          **Branch**: dr-backups/QA
           EOF
 
           echo "✅ Created backup metadata and README"
@@ -478,13 +485,25 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          BRANCH_NAME="dr-backups/QA/${TIMESTAMP}"
-          git checkout --orphan "${BRANCH_NAME}"
-          git rm -rf . 2>/dev/null || true
+          # Use static branch name for this environment
+          BRANCH_NAME="dr-backups/QA"
 
+          # Check if branch exists
+          if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
+            echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
+            git fetch origin "${BRANCH_NAME}"
+            git checkout "${BRANCH_NAME}"
+          else
+            echo "🆕 Creating new branch ${BRANCH_NAME}..."
+            git checkout --orphan "${BRANCH_NAME}"
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Copy backup files to root
           cp -r "${BACKUP_DIR}"/* .
           git add .
 
+          # Commit with detailed message
           git commit -m "DR Backup QA ${TIMESTAMP}" \
             -m "Environment: QA" \
             -m "Timestamp: ${TIMESTAMP}" \
@@ -496,6 +515,7 @@ jobs:
             -m "To restore: git checkout ${BRANCH_NAME}" \
             -m "[skip ci]"
 
+          # Push to remote
           git push origin "${BRANCH_NAME}" --force
 
           echo "✅ Backup committed to branch: ${BRANCH_NAME}"
@@ -551,7 +571,7 @@ jobs:
       - name: Create backup directory structure
         run: |
           TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
-          BACKUP_DIR="dr-backups/PROD/${TIMESTAMP}"
+          BACKUP_DIR="dr-backups/PROD"
           echo "BACKUP_DIR=${BACKUP_DIR}" >> $GITHUB_ENV
           echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
           echo "ENV_NAME=PROD" >> $GITHUB_ENV
@@ -605,7 +625,7 @@ jobs:
             "workflow_run_id": "${{ github.run_id }}",
             "git_commit": "${{ github.sha }}",
             "backup_type": "full",
-            "branch_name": "dr-backups/PROD/${TIMESTAMP}"
+            "branch_name": "dr-backups/PROD"
           }
           EOF
 
@@ -639,7 +659,7 @@ jobs:
 
           1. **Checkout this backup branch**:
              \`\`\`bash
-             git checkout dr-backups/PROD/${TIMESTAMP}
+             git checkout dr-backups/PROD
              \`\`\`
 
           2. **Review the backup contents**:
@@ -696,7 +716,7 @@ jobs:
           **Backup Type**: Full DR Backup
           **Status**: ✅ Complete
           **Retention**: Unlimited (Git history)
-          **Branch**: dr-backups/PROD/${TIMESTAMP}
+          **Branch**: dr-backups/PROD
           EOF
 
           echo "✅ Created backup metadata and README"
@@ -706,13 +726,25 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          BRANCH_NAME="dr-backups/PROD/${TIMESTAMP}"
-          git checkout --orphan "${BRANCH_NAME}"
-          git rm -rf . 2>/dev/null || true
+          # Use static branch name for this environment
+          BRANCH_NAME="dr-backups/PROD"
 
+          # Check if branch exists
+          if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
+            echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
+            git fetch origin "${BRANCH_NAME}"
+            git checkout "${BRANCH_NAME}"
+          else
+            echo "🆕 Creating new branch ${BRANCH_NAME}..."
+            git checkout --orphan "${BRANCH_NAME}"
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Copy backup files to root
           cp -r "${BACKUP_DIR}"/* .
           git add .
 
+          # Commit with detailed message
           git commit -m "DR Backup PROD ${TIMESTAMP}" \
             -m "Environment: PROD" \
             -m "Timestamp: ${TIMESTAMP}" \
@@ -724,6 +756,7 @@ jobs:
             -m "To restore: git checkout ${BRANCH_NAME}" \
             -m "[skip ci]"
 
+          # Push to remote
           git push origin "${BRANCH_NAME}" --force
 
           echo "✅ Backup committed to branch: ${BRANCH_NAME}"
