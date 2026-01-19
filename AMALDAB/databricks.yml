@@ -34,8 +34,8 @@ variables:
     description: "Axiom volume path in Unity Catalog"
   email_notifications:
     description: "Email address for job notifications"
-  git_branch:
-    description: "Git branch name"
+  # git_branch:
+  #   description: "Git branch name"
 
 targets:
   DEV:
