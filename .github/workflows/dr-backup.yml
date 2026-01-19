@@ -145,8 +145,9 @@ jobs:
 
           echo "✅ Backup completed successfully"
 
-      - name: Create backup metadata
+      - name: Create backup metadata and README
         run: |
+          # Create backup metadata JSON
           cat > "${BACKUP_DIR}/backup-metadata.json" << EOF
           {
             "environment": "DEV",
@@ -156,11 +157,101 @@ jobs:
             "triggered_by": "${{ github.actor }}",
             "workflow_run_id": "${{ github.run_id }}",
             "git_commit": "${{ github.sha }}",
-            "backup_type": "full"
+            "backup_type": "full",
+            "branch_name": "dr-backups/DEV/${TIMESTAMP}"
           }
           EOF
-          
-          echo "✅ Created backup metadata"
+
+          # Create README for this backup
+          cat > "${BACKUP_DIR}/README.md" << EOF
+          # 🔄 Disaster Recovery Backup - DEV Environment
+
+          **Backup Timestamp**: ${TIMESTAMP}
+          **Backup Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Environment**: DEV
+          **Workspace**: ${{ vars.DEV_DATABRICKS_HOST }}
+          **Triggered By**: ${{ github.actor }}
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## 📁 Backup Contents
+
+          This backup contains:
+
+          - **SharedObjects/** - All shared clusters, SQL warehouses, cluster policies, storage credentials, external locations, and connections
+          - **jobs/** - All job configurations (if full backup mode)
+          - **uc_ddl/** - Unity Catalog DDL statements (catalogs, schemas, tables, volumes, grants)
+          - **backup-metadata.json** - Metadata about this backup
+
+          ---
+
+          ## 🔧 How to Restore from This Backup
+
+          ### Quick Restore Steps:
+
+          1. **Checkout this backup branch**:
+             \`\`\`bash
+             git checkout dr-backups/DEV/${TIMESTAMP}
+             \`\`\`
+
+          2. **Review the backup contents**:
+             \`\`\`bash
+             ls -la
+             \`\`\`
+
+          3. **Restore Unity Catalog** (most critical):
+             \`\`\`bash
+             export DATABRICKS_HOST="${{ vars.DEV_DATABRICKS_HOST }}"
+             export DATABRICKS_TOKEN="<your-token-or-use-sp>"
+
+             # Execute DDL statements
+             databricks sql execute -f uc_ddl/00_catalogs_schemas_tables_volumes.ddl.sql
+             databricks sql execute -f uc_ddl/99_grants.ddl.sql
+             \`\`\`
+
+          4. **Restore infrastructure** (clusters, warehouses):
+             \`\`\`bash
+             # Copy backup files to your repository
+             cp -r SharedObjects/* /path/to/repo/AMALDAB/resources/SharedObjects/
+             cp -r jobs/* /path/to/repo/AMALDAB/resources/jobs/
+
+             # Deploy using Asset Bundle
+             cd /path/to/repo/AMALDAB
+             databricks bundle deploy -t DEV
+             \`\`\`
+
+          5. **Verify restoration**:
+             - Check Databricks UI for clusters, warehouses, jobs
+             - Verify Unity Catalog objects exist
+             - Test permissions and grants
+
+          ---
+
+          ## 📚 Detailed Documentation
+
+          For complete disaster recovery procedures, see:
+          - **DISASTER_RECOVERY_RESTORE.md** in the main repository
+          - **DR_SYSTEM_IMPLEMENTATION_SUMMARY.md** for system architecture
+
+          ---
+
+          ## ⚠️ Important Notes
+
+          - This is a **point-in-time backup** from ${TIMESTAMP}
+          - Restoring will **overwrite** current configurations
+          - Always **test in DEV** before restoring to PROD
+          - **Backup metadata** is in backup-metadata.json
+
+          ---
+
+          **Backup Type**: Full DR Backup
+          **Status**: ✅ Complete
+          **Retention**: Unlimited (Git history)
+          **Branch**: dr-backups/DEV/${TIMESTAMP}
+          EOF
+
+          echo "✅ Created backup metadata and README"
 
       - name: Commit backup to dr-backups branch
         run: |
@@ -200,10 +291,18 @@ jobs:
         if: always()
         run: |
           # Return to main branch
-          git checkout main 2>/dev/null || git checkout dev 2>/dev/null || true
+          git checkout main 2>/dev/null || git checkout DEV 2>/dev/null || git checkout dev 2>/dev/null || true
 
-          # Clean up local backup directory
-          rm -rf "${BACKUP_DIR}"
+          # Clean up ALL backup artifacts to keep main repository clean
+          rm -rf dr-backups/ 2>/dev/null || true
+          rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Verify cleanup
+          if [ -d "dr-backups" ]; then
+            echo "⚠️  Warning: dr-backups directory still exists"
+          else
+            echo "✅ Main repository is clean (no backup artifacts)"
+          fi
 
           echo "✅ Cleanup completed"
 
@@ -292,8 +391,9 @@ jobs:
 
           echo "✅ Backup completed successfully"
 
-      - name: Create backup metadata
+      - name: Create backup metadata and README
         run: |
+          # Create backup metadata JSON
           cat > "${BACKUP_DIR}/backup-metadata.json" << EOF
           {
             "environment": "QA",
@@ -303,11 +403,101 @@ jobs:
             "triggered_by": "${{ github.actor }}",
             "workflow_run_id": "${{ github.run_id }}",
             "git_commit": "${{ github.sha }}",
-            "backup_type": "full"
+            "backup_type": "full",
+            "branch_name": "dr-backups/QA/${TIMESTAMP}"
           }
           EOF
 
-          echo "✅ Created backup metadata"
+          # Create README for this backup
+          cat > "${BACKUP_DIR}/README.md" << EOF
+          # 🔄 Disaster Recovery Backup - QA Environment
+
+          **Backup Timestamp**: ${TIMESTAMP}
+          **Backup Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Environment**: QA
+          **Workspace**: ${{ vars.QA_DATABRICKS_HOST }}
+          **Triggered By**: ${{ github.actor }}
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## 📁 Backup Contents
+
+          This backup contains:
+
+          - **SharedObjects/** - All shared clusters, SQL warehouses, cluster policies, storage credentials, external locations, and connections
+          - **jobs/** - All job configurations (if full backup mode)
+          - **uc_ddl/** - Unity Catalog DDL statements (catalogs, schemas, tables, volumes, grants)
+          - **backup-metadata.json** - Metadata about this backup
+
+          ---
+
+          ## 🔧 How to Restore from This Backup
+
+          ### Quick Restore Steps:
+
+          1. **Checkout this backup branch**:
+             \`\`\`bash
+             git checkout dr-backups/QA/${TIMESTAMP}
+             \`\`\`
+
+          2. **Review the backup contents**:
+             \`\`\`bash
+             ls -la
+             \`\`\`
+
+          3. **Restore Unity Catalog** (most critical):
+             \`\`\`bash
+             export DATABRICKS_HOST="${{ vars.QA_DATABRICKS_HOST }}"
+             export DATABRICKS_TOKEN="<your-token-or-use-sp>"
+
+             # Execute DDL statements
+             databricks sql execute -f uc_ddl/00_catalogs_schemas_tables_volumes.ddl.sql
+             databricks sql execute -f uc_ddl/99_grants.ddl.sql
+             \`\`\`
+
+          4. **Restore infrastructure** (clusters, warehouses):
+             \`\`\`bash
+             # Copy backup files to your repository
+             cp -r SharedObjects/* /path/to/repo/AMALDAB/resources/SharedObjects/
+             cp -r jobs/* /path/to/repo/AMALDAB/resources/jobs/
+
+             # Deploy using Asset Bundle
+             cd /path/to/repo/AMALDAB
+             databricks bundle deploy -t QA
+             \`\`\`
+
+          5. **Verify restoration**:
+             - Check Databricks UI for clusters, warehouses, jobs
+             - Verify Unity Catalog objects exist
+             - Test permissions and grants
+
+          ---
+
+          ## 📚 Detailed Documentation
+
+          For complete disaster recovery procedures, see:
+          - **DISASTER_RECOVERY_RESTORE.md** in the main repository
+          - **DR_SYSTEM_IMPLEMENTATION_SUMMARY.md** for system architecture
+
+          ---
+
+          ## ⚠️ Important Notes
+
+          - This is a **point-in-time backup** from ${TIMESTAMP}
+          - Restoring will **overwrite** current configurations
+          - Always **test in DEV** before restoring to PROD
+          - **Backup metadata** is in backup-metadata.json
+
+          ---
+
+          **Backup Type**: Full DR Backup
+          **Status**: ✅ Complete
+          **Retention**: Unlimited (Git history)
+          **Branch**: dr-backups/QA/${TIMESTAMP}
+          EOF
+
+          echo "✅ Created backup metadata and README"
 
       - name: Commit backup to dr-backups branch
         run: |
@@ -340,8 +530,20 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          git checkout main 2>/dev/null || git checkout dev 2>/dev/null || true
-          rm -rf "${BACKUP_DIR}"
+          # Return to main branch
+          git checkout main 2>/dev/null || git checkout DEV 2>/dev/null || git checkout dev 2>/dev/null || true
+
+          # Clean up ALL backup artifacts to keep main repository clean
+          rm -rf dr-backups/ 2>/dev/null || true
+          rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Verify cleanup
+          if [ -d "dr-backups" ]; then
+            echo "⚠️  Warning: dr-backups directory still exists"
+          else
+            echo "✅ Main repository is clean (no backup artifacts)"
+          fi
+
           echo "✅ Cleanup completed"
 
   # ============================================================================
@@ -429,8 +631,9 @@ jobs:
 
           echo "✅ Backup completed successfully"
 
-      - name: Create backup metadata
+      - name: Create backup metadata and README
         run: |
+          # Create backup metadata JSON
           cat > "${BACKUP_DIR}/backup-metadata.json" << EOF
           {
             "environment": "PROD",
@@ -440,11 +643,102 @@ jobs:
             "triggered_by": "${{ github.actor }}",
             "workflow_run_id": "${{ github.run_id }}",
             "git_commit": "${{ github.sha }}",
-            "backup_type": "full"
+            "backup_type": "full",
+            "branch_name": "dr-backups/PROD/${TIMESTAMP}"
           }
           EOF
 
-          echo "✅ Created backup metadata"
+          # Create README for this backup
+          cat > "${BACKUP_DIR}/README.md" << EOF
+          # 🔄 Disaster Recovery Backup - PROD Environment
+
+          **Backup Timestamp**: ${TIMESTAMP}
+          **Backup Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Environment**: PROD
+          **Workspace**: ${{ vars.PROD_DATABRICKS_HOST }}
+          **Triggered By**: ${{ github.actor }}
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## 📁 Backup Contents
+
+          This backup contains:
+
+          - **SharedObjects/** - All shared clusters, SQL warehouses, cluster policies, storage credentials, external locations, and connections
+          - **jobs/** - All job configurations (if full backup mode)
+          - **uc_ddl/** - Unity Catalog DDL statements (catalogs, schemas, tables, volumes, grants)
+          - **backup-metadata.json** - Metadata about this backup
+
+          ---
+
+          ## 🔧 How to Restore from This Backup
+
+          ### Quick Restore Steps:
+
+          1. **Checkout this backup branch**:
+             \`\`\`bash
+             git checkout dr-backups/PROD/${TIMESTAMP}
+             \`\`\`
+
+          2. **Review the backup contents**:
+             \`\`\`bash
+             ls -la
+             \`\`\`
+
+          3. **Restore Unity Catalog** (most critical):
+             \`\`\`bash
+             export DATABRICKS_HOST="${{ vars.PROD_DATABRICKS_HOST }}"
+             export DATABRICKS_TOKEN="<your-token-or-use-sp>"
+
+             # Execute DDL statements
+             databricks sql execute -f uc_ddl/00_catalogs_schemas_tables_volumes.ddl.sql
+             databricks sql execute -f uc_ddl/99_grants.ddl.sql
+             \`\`\`
+
+          4. **Restore infrastructure** (clusters, warehouses):
+             \`\`\`bash
+             # Copy backup files to your repository
+             cp -r SharedObjects/* /path/to/repo/AMALDAB/resources/SharedObjects/
+             cp -r jobs/* /path/to/repo/AMALDAB/resources/jobs/
+
+             # Deploy using Asset Bundle
+             cd /path/to/repo/AMALDAB
+             databricks bundle deploy -t PROD
+             \`\`\`
+
+          5. **Verify restoration**:
+             - Check Databricks UI for clusters, warehouses, jobs
+             - Verify Unity Catalog objects exist
+             - Test permissions and grants
+
+          ---
+
+          ## 📚 Detailed Documentation
+
+          For complete disaster recovery procedures, see:
+          - **DISASTER_RECOVERY_RESTORE.md** in the main repository
+          - **DR_SYSTEM_IMPLEMENTATION_SUMMARY.md** for system architecture
+
+          ---
+
+          ## ⚠️ Important Notes
+
+          - This is a **point-in-time backup** from ${TIMESTAMP}
+          - Restoring will **overwrite** current configurations
+          - **PRODUCTION ENVIRONMENT** - Exercise extreme caution!
+          - Always **test in DEV** before restoring to PROD
+          - **Backup metadata** is in backup-metadata.json
+
+          ---
+
+          **Backup Type**: Full DR Backup
+          **Status**: ✅ Complete
+          **Retention**: Unlimited (Git history)
+          **Branch**: dr-backups/PROD/${TIMESTAMP}
+          EOF
+
+          echo "✅ Created backup metadata and README"
 
       - name: Commit backup to dr-backups branch
         run: |
@@ -477,8 +771,20 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          git checkout main 2>/dev/null || git checkout dev 2>/dev/null || true
-          rm -rf "${BACKUP_DIR}"
+          # Return to main branch
+          git checkout main 2>/dev/null || git checkout DEV 2>/dev/null || git checkout dev 2>/dev/null || true
+
+          # Clean up ALL backup artifacts to keep main repository clean
+          rm -rf dr-backups/ 2>/dev/null || true
+          rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Verify cleanup
+          if [ -d "dr-backups" ]; then
+            echo "⚠️  Warning: dr-backups directory still exists"
+          else
+            echo "✅ Main repository is clean (no backup artifacts)"
+          fi
+
           echo "✅ Cleanup completed"
 
   # ============================================================================
