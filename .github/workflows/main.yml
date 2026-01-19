@@ -25,7 +25,7 @@ on:
     #   - databricks.yml
 
 jobs:
-  UniTesting:
+  UnitTesting:
     runs-on: windows-latest
     defaults:
       run:
@@ -66,9 +66,9 @@ jobs:
           
   run-prerequisites:
     runs-on: windows-latest
-    needs: UniTesting
+    needs: UnitTesting
     outputs:
-      status: ${{ steps.prerequisites.outcome }}
+      status: ${{ steps.prerequisites.outcome}}
       env_name: ${{ steps.set-env.outputs.env_name }}
     steps:
       - name: Configure Git
@@ -126,67 +126,67 @@ jobs:
           echo "env_name=$envName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "::notice::🎯 Target environment: $envName"
 
-      - name: Run prerequisites Python script
-        id: prerequisites
-        shell: pwsh
-        env:
-          DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
-          # Service Principal authentication (recommended for production)
-          CLIENT_ID: ${{ vars[format('{0}_CLIENT_ID', env.ENV_NAME)] }}
-          CLIENT_SECRET: ${{ secrets[format('{0}_CLIENT_SECRET', env.ENV_NAME)] }}
-          # PAT token authentication (legacy fallback)
-          DATABRICKS_TOKEN: ${{ secrets[format('{0}_DATABRICKS_TOKEN', env.ENV_NAME)] }}
-        run: |
-          Write-Host "🔧 Running prerequisites script..."
-          Write-Host "📍 DATABRICKS_HOST: $env:DATABRICKS_HOST"
+      # - name: Run prerequisites Python script
+      #   id: prerequisites
+      #   shell: pwsh
+      #   env:
+      #     DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
+      #     # Service Principal authentication (recommended for production)
+      #     CLIENT_ID: ${{ vars[format('{0}_CLIENT_ID', env.ENV_NAME)] }}
+      #     CLIENT_SECRET: ${{ secrets[format('{0}_CLIENT_SECRET', env.ENV_NAME)] }}
+      #     # PAT token authentication (legacy fallback)
+      #     DATABRICKS_TOKEN: ${{ secrets[format('{0}_DATABRICKS_TOKEN', env.ENV_NAME)] }}
+      #   run: |
+      #     Write-Host "🔧 Running prerequisites script..."
+      #     Write-Host "📍 DATABRICKS_HOST: $env:DATABRICKS_HOST"
 
-          # Determine authentication method
-          $authArgs = @()
-          if ($env:CLIENT_ID -and $env:CLIENT_SECRET) {
-            Write-Host "🔐 Using Service Principal authentication (recommended)"
-            Write-Host "   CLIENT_ID: $($env:CLIENT_ID.Substring(0, [Math]::Min(8, $env:CLIENT_ID.Length)))..."
-            $authArgs += "--CLIENT_ID", "$env:CLIENT_ID"
-            $authArgs += "--CLIENT_SECRET", "$env:CLIENT_SECRET"
-          } elseif ($env:DATABRICKS_TOKEN) {
-            Write-Host "⚠️  Using PAT token authentication (legacy)"
-            Write-Host "   Token length: $($env:DATABRICKS_TOKEN.Length)"
-            $authArgs += "--DATABRICKS_TOKEN", "$env:DATABRICKS_TOKEN"
-          } else {
-            Write-Error "❌ No authentication credentials found. Configure either:"
-            Write-Error "   - Service Principal: {ENV}_CLIENT_ID (variable) + {ENV}_CLIENT_SECRET (secret)"
-            Write-Error "   - PAT Token: {ENV}_DATABRICKS_TOKEN (secret)"
-            exit 1
-          }
+      #     # Determine authentication method
+      #     $authArgs = @()
+      #     if ($env:CLIENT_ID -and $env:CLIENT_SECRET) {
+      #       Write-Host "🔐 Using Service Principal authentication (recommended)"
+      #       Write-Host "   CLIENT_ID: $($env:CLIENT_ID.Substring(0, [Math]::Min(8, $env:CLIENT_ID.Length)))..."
+      #       $authArgs += "--CLIENT_ID", "$env:CLIENT_ID"
+      #       $authArgs += "--CLIENT_SECRET", "$env:CLIENT_SECRET"
+      #     } elseif ($env:DATABRICKS_TOKEN) {
+      #       Write-Host "⚠️  Using PAT token authentication (legacy)"
+      #       Write-Host "   Token length: $($env:DATABRICKS_TOKEN.Length)"
+      #       $authArgs += "--DATABRICKS_TOKEN", "$env:DATABRICKS_TOKEN"
+      #     } else {
+      #       Write-Error "❌ No authentication credentials found. Configure either:"
+      #       Write-Error "   - Service Principal: {ENV}_CLIENT_ID (variable) + {ENV}_CLIENT_SECRET (secret)"
+      #       Write-Error "   - PAT Token: {ENV}_DATABRICKS_TOKEN (secret)"
+      #       exit 1
+      #     }
 
-          # Run the prerequisites script to generate infrastructure configs
-          python .github/workflows/prerequisites.py `
-            --DATABRICKS_HOST "$env:DATABRICKS_HOST" `
-            @authArgs
+      #     # Run the prerequisites script to generate infrastructure configs
+      #     python .github/workflows/prerequisites.py `
+      #       --DATABRICKS_HOST "$env:DATABRICKS_HOST" `
+      #       @authArgs
 
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "❌ Prerequisites script failed with exit code $LASTEXITCODE"
-            exit $LASTEXITCODE
-          }
+      #     if ($LASTEXITCODE -ne 0) {
+      #       Write-Error "❌ Prerequisites script failed with exit code $LASTEXITCODE"
+      #       exit $LASTEXITCODE
+      #     }
 
-          # Verify outputs were created
-          $clusterFile = "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml"
-          $warehouseFile = "AMALDAB/resources/SharedObjects/sql_warehouses.yml"
+      #     # Verify outputs were created
+      #     $clusterFile = "AMALDAB/resources/SharedObjects/all_purpose_clusters.yml"
+      #     $warehouseFile = "AMALDAB/resources/SharedObjects/sql_warehouses.yml"
 
-          if (Test-Path $clusterFile) {
-            Write-Host "✅ $clusterFile created"
-            Get-Content $clusterFile | Select-Object -First 5
-          } else {
-            Write-Warning "⚠️ $clusterFile not found (may not have any clusters)"
-          }
+      #     if (Test-Path $clusterFile) {
+      #       Write-Host "✅ $clusterFile created"
+      #       Get-Content $clusterFile | Select-Object -First 5
+      #     } else {
+      #       Write-Warning "⚠️ $clusterFile not found (may not have any clusters)"
+      #     }
 
-          if (Test-Path $warehouseFile) {
-            Write-Host "✅ $warehouseFile created"
-            Get-Content $warehouseFile | Select-Object -First 5
-          } else {
-            Write-Warning "⚠️ $warehouseFile not found (may not have any warehouses)"
-          }
+      #     if (Test-Path $warehouseFile) {
+      #       Write-Host "✅ $warehouseFile created"
+      #       Get-Content $warehouseFile | Select-Object -First 5
+      #     } else {
+      #       Write-Warning "⚠️ $warehouseFile not found (may not have any warehouses)"
+      #     }
 
-          Write-Host "✅ Prerequisites completed successfully"
+      #     Write-Host "✅ Prerequisites completed successfully"
           
       - name: Upload generated configs as artifacts
         uses: actions/upload-artifact@v4
