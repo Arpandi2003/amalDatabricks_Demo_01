@@ -12,13 +12,18 @@ import yaml
 import argparse
 import urllib.parse
 from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
 
 # ===================================================================
 # 🛠️ CONFIGURATION & UTILITIES
 # ===================================================================
 
-# Global variables to store parsed arguments
+# Global variables to store parsed arguments and OAuth token cache
 _ARGS = None
+_OAUTH_TOKEN_CACHE = {
+    "token": None,
+    "expires_at": None
+}
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -27,14 +32,17 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
-  # Standard backup (shared objects only)
+  # Using PAT token (legacy)
   python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --DATABRICKS_TOKEN dapi123
 
-  # Full DR backup (all objects including jobs)
-  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --DATABRICKS_TOKEN dapi123 --full-backup
+  # Using Service Principal (recommended for production)
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --CLIENT_ID <sp-id> --CLIENT_SECRET <sp-secret>
+
+  # Full DR backup with Service Principal
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --CLIENT_ID <sp-id> --CLIENT_SECRET <sp-secret> --full-backup
 
   # Full backup with custom output directory
-  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --DATABRICKS_TOKEN dapi123 --full-backup --output-dir ./backups/prod
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --CLIENT_ID <sp-id> --CLIENT_SECRET <sp-secret> --full-backup --output-dir ./backups/prod
         '''
     )
     parser.add_argument(
@@ -42,11 +50,27 @@ Examples:
         required=True,
         help='Databricks workspace URL (e.g., https://adb-xxx.azuredatabricks.net)'
     )
+
+    # Authentication: PAT token (legacy, for backward compatibility)
     parser.add_argument(
         '--DATABRICKS_TOKEN',
-        required=True,
-        help='Databricks Personal Access Token or OAuth token'
+        required=False,
+        help='Databricks Personal Access Token (legacy - use Service Principal instead)'
     )
+
+    # Authentication: Service Principal (recommended for production)
+    parser.add_argument(
+        '--CLIENT_ID',
+        required=False,
+        help='Service Principal Application (Client) ID'
+    )
+    parser.add_argument(
+        '--CLIENT_SECRET',
+        required=False,
+        help='Service Principal Client Secret'
+    )
+
+    # Backup options
     parser.add_argument(
         '--full-backup',
         action='store_true',
@@ -57,7 +81,20 @@ Examples:
         default='./AMALDAB/resources',
         help='Output directory for backup files (default: ./AMALDAB/resources)'
     )
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    # Validate authentication credentials
+    has_pat = args.DATABRICKS_TOKEN is not None
+    has_sp = args.CLIENT_ID is not None and args.CLIENT_SECRET is not None
+
+    if not has_pat and not has_sp:
+        parser.error("Authentication required: provide either --DATABRICKS_TOKEN or both --CLIENT_ID and --CLIENT_SECRET")
+
+    if has_pat and has_sp:
+        print("⚠️  Warning: Both PAT token and Service Principal provided. Using Service Principal (recommended).")
+
+    return args
 
 def get_databricks_instance() -> str:
     """Get Databricks workspace URL from command line args."""
@@ -75,18 +112,115 @@ def get_databricks_instance() -> str:
 
     return instance.rstrip("/")
 
+def get_oauth_token_from_service_principal(client_id: str, client_secret: str, host: str) -> Dict[str, Any]:
+    """
+    Exchange Service Principal credentials for OAuth access token.
+
+    Args:
+        client_id: Service Principal Application (Client) ID
+        client_secret: Service Principal Client Secret
+        host: Databricks workspace URL
+
+    Returns:
+        Dictionary with 'access_token' and 'expires_in' (seconds)
+
+    Raises:
+        requests.exceptions.HTTPError: If token exchange fails
+    """
+    token_url = f"{host}/oidc/v1/token"
+
+    print(f"🔐 Authenticating with Service Principal...")
+    print(f"   Client ID: {client_id[:8]}...{client_id[-4:]}")
+    print(f"   Token URL: {token_url}")
+
+    try:
+        response = requests.post(
+            token_url,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "grant_type": "client_credentials",
+                "scope": "all-apis",
+                "client_id": client_id,
+                "client_secret": client_secret
+            },
+            timeout=30
+        )
+
+        response.raise_for_status()
+        token_data = response.json()
+
+        print(f"✅ OAuth token obtained successfully")
+        print(f"   Token expires in: {token_data.get('expires_in', 'unknown')} seconds")
+
+        return token_data
+
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ OAuth token exchange failed: {e}")
+        if hasattr(e.response, 'text'):
+            print(f"   Response: {e.response.text[:500]}")
+        raise ValueError(f"Service Principal authentication failed. Check CLIENT_ID and CLIENT_SECRET.") from e
+    except Exception as e:
+        print(f"❌ Unexpected error during OAuth token exchange: {e}")
+        raise
+
 def get_databricks_token() -> str:
-    """Get PAT or OAuth token from command line args."""
-    global _ARGS
+    """
+    Get authentication token for Databricks API calls.
+
+    Supports two authentication methods:
+    1. Service Principal (recommended for production) - OAuth token with auto-refresh
+    2. PAT token (legacy) - Direct token usage
+
+    Returns:
+        Valid access token for Databricks API
+    """
+    global _ARGS, _OAUTH_TOKEN_CACHE
+
     if _ARGS is None:
         raise RuntimeError("Arguments not parsed. Call parse_arguments() first.")
 
-    token = _ARGS.DATABRICKS_TOKEN.strip()
+    # Method 1: Service Principal (recommended)
+    if _ARGS.CLIENT_ID and _ARGS.CLIENT_SECRET:
+        # Check if cached token is still valid
+        if _OAUTH_TOKEN_CACHE["token"] and _OAUTH_TOKEN_CACHE["expires_at"]:
+            if datetime.now() < _OAUTH_TOKEN_CACHE["expires_at"]:
+                # Token still valid, use cached version
+                return _OAUTH_TOKEN_CACHE["token"]
+            else:
+                print("🔄 OAuth token expired, refreshing...")
 
-    if not token:
-        raise ValueError("Databricks token missing. Provide --DATABRICKS_TOKEN argument.")
+        # Get new OAuth token
+        token_data = get_oauth_token_from_service_principal(
+            client_id=_ARGS.CLIENT_ID.strip(),
+            client_secret=_ARGS.CLIENT_SECRET.strip(),
+            host=get_databricks_instance()
+        )
 
-    return token
+        # Cache the token with expiration (subtract 5 minutes for safety margin)
+        access_token = token_data["access_token"]
+        expires_in = token_data.get("expires_in", 3600)  # Default 1 hour
+        expires_at = datetime.now() + timedelta(seconds=expires_in - 300)
+
+        _OAUTH_TOKEN_CACHE["token"] = access_token
+        _OAUTH_TOKEN_CACHE["expires_at"] = expires_at
+
+        print(f"✅ Using Service Principal authentication (token valid until {expires_at.strftime('%Y-%m-%d %H:%M:%S')})")
+
+        return access_token
+
+    # Method 2: PAT token (legacy fallback)
+    elif _ARGS.DATABRICKS_TOKEN:
+        token = _ARGS.DATABRICKS_TOKEN.strip()
+
+        if not token:
+            raise ValueError("Databricks token is empty. Provide a valid --DATABRICKS_TOKEN.")
+
+        print("⚠️  Using PAT token authentication (legacy - consider migrating to Service Principal)")
+
+        return token
+
+    else:
+        raise ValueError("No authentication credentials provided. Use --CLIENT_ID + --CLIENT_SECRET or --DATABRICKS_TOKEN.")
 
 def get_headers() -> Dict[str, str]:
     return {
@@ -603,7 +737,6 @@ def main():
         print(f"   • Total Jobs: {len(jobs)}")
         print(f"   • SQL Warehouses: {len(warehouses)}")
         print(f"   • Cluster Policies: {len(policies)}")
-        print(f"   • Unity Catalog Objects: {total_uc_objects}")
         print("=" * 70)
 
 if __name__ == "__main__":
