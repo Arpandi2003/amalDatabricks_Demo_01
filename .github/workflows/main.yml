@@ -312,15 +312,32 @@ jobs:
         shell: pwsh
         env:
           DATABRICKS_HOST: ${{ vars[format('{0}_DATABRICKS_HOST', env.ENV_NAME)] }}
-          DATABRICKS_TOKEN: ${{ secrets[format('{0}_DATABRICKS_TOKEN', env.ENV_NAME)] }}
           DATABRICKS_CLIENT_ID: ${{ vars[format('{0}_DATABRICKS_CLIENT_ID', env.ENV_NAME)] }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets[format('{0}_DATABRICKS_CLIENT_SECRET', env.ENV_NAME)] }}
         run: |
-          Write-Host "🔐 Configuring Databricks authentication..."
+          Write-Host "🔐 Configuring Databricks authentication with Service Principal..."
           $cfgPath = "$env:USERPROFILE\.databrickscfg"
           $profileName = $env:ENV_NAME
 
-          # Create config file line by line to avoid extra newlines
+          # Validate required environment variables
+          if (-not $env:DATABRICKS_HOST) {
+            Write-Error "❌ DATABRICKS_HOST is not set"
+            exit 1
+          }
+          if (-not $env:DATABRICKS_CLIENT_ID) {
+            Write-Error "❌ DATABRICKS_CLIENT_ID is not set"
+            exit 1
+          }
+          if (-not $env:DATABRICKS_CLIENT_SECRET) {
+            Write-Error "❌ DATABRICKS_CLIENT_SECRET is not set"
+            exit 1
+          }
+
+          Write-Host "✅ Service Principal credentials validated"
+          Write-Host "   Host: $env:DATABRICKS_HOST"
+          Write-Host "   Client ID: $($env:DATABRICKS_CLIENT_ID.Substring(0, [Math]::Min(8, $env:DATABRICKS_CLIENT_ID.Length)))..."
+
+          # Create config file with Service Principal OAuth authentication only
           "[$profileName]" | Out-File -FilePath $cfgPath -Encoding utf8
           "host = $env:DATABRICKS_HOST" | Out-File -FilePath $cfgPath -Encoding utf8 -Append
           "client_id = $env:DATABRICKS_CLIENT_ID" | Out-File -FilePath $cfgPath -Encoding utf8 -Append
@@ -330,12 +347,17 @@ jobs:
           icacls $cfgPath /inheritance:r /grant:r "$env:USERNAME`:F" | Out-Null
 
           Write-Host "✅ Config file created at: $cfgPath"
-          Write-Host "🧪 Testing authentication..."
+          Write-Host "🧪 Testing Service Principal authentication..."
 
           # Test authentication using new CLI command
           databricks auth env --profile $profileName
 
-          Write-Host "✅ Authentication successful!"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "❌ Service Principal authentication failed"
+            exit $LASTEXITCODE
+          }
+
+          Write-Host "✅ Service Principal authentication successful!"
 
       - name: Validate Databricks bundle
         shell: pwsh

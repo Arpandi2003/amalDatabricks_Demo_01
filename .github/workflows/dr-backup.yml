@@ -102,41 +102,28 @@ jobs:
       - name: Run full backup script
         env:
           DATABRICKS_HOST: ${{ vars.DEV_DATABRICKS_HOST }}
-          # Service Parincipal authentication (recommended)
           CLIENT_ID: ${{ vars.DEV_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.DEV_CLIENT_SECRET }}
-          # PAT token authentication (legacy fallback)
-          DATABRICKS_TOKEN: ${{ secrets.DEV_DATABRICKS_TOKEN }}
         run: |
           echo "🔧 Running full backup for DEV environment..."
           echo "📍 Workspace: ${DATABRICKS_HOST}"
 
-          # Determine authentication method
-          if [ -n "${CLIENT_ID}" ] && [ -n "${CLIENT_SECRET}" ]; then
-            echo "🔐 Using Service Principal authentication (recommended)"
-            echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
-
-            python .github/workflows/prerequisites.py \
-              --DATABRICKS_HOST "${DATABRICKS_HOST}" \
-              --CLIENT_ID "${CLIENT_ID}" \
-              --CLIENT_SECRET "${CLIENT_SECRET}" \
-              --full-backup \
-              --output-dir "${BACKUP_DIR}"
-          elif [ -n "${DATABRICKS_TOKEN}" ]; then
-            echo "⚠️  Using PAT token authentication (legacy)"
-            echo "   Token length: ${#DATABRICKS_TOKEN}"
-
-            python .github/workflows/prerequisites.py \
-              --DATABRICKS_HOST "${DATABRICKS_HOST}" \
-              --DATABRICKS_TOKEN "${DATABRICKS_TOKEN}" \
-              --full-backup \
-              --output-dir "${BACKUP_DIR}"
-          else
-            echo "❌ No authentication credentials found. Configure either:"
-            echo "   - Service Principal: DEV_CLIENT_ID (variable) + DEV_CLIENT_SECRET (secret)"
-            echo "   - PAT Token: DEV_DATABRICKS_TOKEN (secret)"
+          # Validate Service Principal credentials
+          if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
+            echo "❌ Service Principal credentials not found"
+            echo "   Required: DEV_CLIENT_ID (variable) + DEV_CLIENT_SECRET (secret)"
             exit 1
           fi
+
+          echo "🔐 Using Service Principal authentication"
+          echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
+
+          python .github/workflows/prerequisites.py \
+            --DATABRICKS_HOST "${DATABRICKS_HOST}" \
+            --CLIENT_ID "${CLIENT_ID}" \
+            --CLIENT_SECRET "${CLIENT_SECRET}" \
+            --full-backup \
+            --output-dir "${BACKUP_DIR}"
 
           if [ $? -ne 0 ]; then
             echo "❌ Backup script failed"
@@ -348,41 +335,28 @@ jobs:
       - name: Run full backup script
         env:
           DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
-          # Service Principal authentication (recommended)
           CLIENT_ID: ${{ vars.QA_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.QA_CLIENT_SECRET }}
-          # PAT token authentication (legacy fallback)
-          DATABRICKS_TOKEN: ${{ secrets.QA_DATABRICKS_TOKEN }}
         run: |
           echo "🔧 Running full backup for QA environment..."
           echo "📍 Workspace: ${DATABRICKS_HOST}"
 
-          # Determine authentication method
-          if [ -n "${CLIENT_ID}" ] && [ -n "${CLIENT_SECRET}" ]; then
-            echo "🔐 Using Service Principal authentication (recommended)"
-            echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
-
-            python .github/workflows/prerequisites.py \
-              --DATABRICKS_HOST "${DATABRICKS_HOST}" \
-              --CLIENT_ID "${CLIENT_ID}" \
-              --CLIENT_SECRET "${CLIENT_SECRET}" \
-              --full-backup \
-              --output-dir "${BACKUP_DIR}"
-          elif [ -n "${DATABRICKS_TOKEN}" ]; then
-            echo "⚠️  Using PAT token authentication (legacy)"
-            echo "   Token length: ${#DATABRICKS_TOKEN}"
-
-            python .github/workflows/prerequisites.py \
-              --DATABRICKS_HOST "${DATABRICKS_HOST}" \
-              --DATABRICKS_TOKEN "${DATABRICKS_TOKEN}" \
-              --full-backup \
-              --output-dir "${BACKUP_DIR}"
-          else
-            echo "❌ No authentication credentials found. Configure either:"
-            echo "   - Service Principal: QA_CLIENT_ID (variable) + QA_CLIENT_SECRET (secret)"
-            echo "   - PAT Token: QA_DATABRICKS_TOKEN (secret)"
+          # Validate Service Principal credentials
+          if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
+            echo "❌ Service Principal credentials not found"
+            echo "   Required: QA_CLIENT_ID (variable) + QA_CLIENT_SECRET (secret)"
             exit 1
           fi
+
+          echo "🔐 Using Service Principal authentication"
+          echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
+
+          python .github/workflows/prerequisites.py \
+            --DATABRICKS_HOST "${DATABRICKS_HOST}" \
+            --CLIENT_ID "${CLIENT_ID}" \
+            --CLIENT_SECRET "${CLIENT_SECRET}" \
+            --full-backup \
+            --output-dir "${BACKUP_DIR}"
 
           if [ $? -ne 0 ]; then
             echo "❌ Backup script failed"
@@ -588,41 +562,28 @@ jobs:
       - name: Run full backup script
         env:
           DATABRICKS_HOST: ${{ vars.PROD_DATABRICKS_HOST }}
-          # Service Principal authentication (recommended)
           CLIENT_ID: ${{ vars.PROD_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.PROD_CLIENT_SECRET }}
-          # PAT token authentication (legacy fallback)
-          DATABRICKS_TOKEN: ${{ secrets.PROD_DATABRICKS_TOKEN }}
         run: |
           echo "🔧 Running full backup for PROD environment..."
           echo "📍 Workspace: ${DATABRICKS_HOST}"
 
-          # Determine authentication method
-          if [ -n "${CLIENT_ID}" ] && [ -n "${CLIENT_SECRET}" ]; then
-            echo "🔐 Using Service Principal authentication (recommended)"
-            echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
-
-            python .github/workflows/prerequisites.py \
-              --DATABRICKS_HOST "${DATABRICKS_HOST}" \
-              --CLIENT_ID "${CLIENT_ID}" \
-              --CLIENT_SECRET "${CLIENT_SECRET}" \
-              --full-backup \
-              --output-dir "${BACKUP_DIR}"
-          elif [ -n "${DATABRICKS_TOKEN}" ]; then
-            echo "⚠️  Using PAT token authentication (legacy)"
-            echo "   Token length: ${#DATABRICKS_TOKEN}"
-
-            python .github/workflows/prerequisites.py \
-              --DATABRICKS_HOST "${DATABRICKS_HOST}" \
-              --DATABRICKS_TOKEN "${DATABRICKS_TOKEN}" \
-              --full-backup \
-              --output-dir "${BACKUP_DIR}"
-          else
-            echo "❌ No authentication credentials found. Configure either:"
-            echo "   - Service Principal: PROD_CLIENT_ID (variable) + PROD_CLIENT_SECRET (secret)"
-            echo "   - PAT Token: PROD_DATABRICKS_TOKEN (secret)"
+          # Validate Service Principal credentials
+          if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
+            echo "❌ Service Principal credentials not found"
+            echo "   Required: PROD_CLIENT_ID (variable) + PROD_CLIENT_SECRET (secret)"
             exit 1
           fi
+
+          echo "🔐 Using Service Principal authentication"
+          echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
+
+          python .github/workflows/prerequisites.py \
+            --DATABRICKS_HOST "${DATABRICKS_HOST}" \
+            --CLIENT_ID "${CLIENT_ID}" \
+            --CLIENT_SECRET "${CLIENT_SECRET}" \
+            --full-backup \
+            --output-dir "${BACKUP_DIR}"
 
           if [ $? -ne 0 ]; then
             echo "❌ Backup script failed"
