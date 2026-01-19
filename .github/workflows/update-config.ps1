@@ -105,7 +105,7 @@ switch ($Environment) {
     }
 }
 
-Write-Host "✅ Environment-specific configuration for $Environment:"
+Write-Host "✅ Environment-specific configuration for: $Environment"
 Write-Host "   - Key Vault Scope: $keyVaultScope"
 Write-Host "   - Catalog Name: $catalogName"
 Write-Host "   - Logger Directory: $loggerDirectory"
