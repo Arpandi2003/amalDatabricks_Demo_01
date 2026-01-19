@@ -222,6 +222,40 @@ jobs:
           name: databricks-configs-${{ env.ENV_NAME }}
           path: AMALDAB/resources/
 
+      - name: Install PowerShell YAML module
+        shell: pwsh
+        run: |
+          Write-Host "📦 Installing PowerShell YAML module..."
+          $ProgressPreference = 'SilentlyContinue'
+          Install-Module powershell-yaml -Force -Scope CurrentUser -AllowClobber
+          Import-Module powershell-yaml -ErrorAction Stop
+          Write-Host "✅ PowerShell YAML module installed"
+
+      - name: Update NB_Configuration.py with DAB variables
+        shell: pwsh
+        run: |
+          Write-Host "🔧 Updating NB_Configuration.py with environment-specific values from databricks.yml..."
+
+          # Set execution policy for this session
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+
+          # Unblock the script
+          $scriptPath = ".github/workflows/update-config.ps1"
+          if (Test-Path $scriptPath) {
+            Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
+
+            # Run the update script
+            & $scriptPath -Environment $env:ENV_NAME -BundleDir "AMALDAB" -ConfigFile "AMALDAB/DataPlatform/General/NB_Configuration.py"
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "❌ Configuration update failed"
+              exit $LASTEXITCODE
+            }
+          } else {
+            Write-Error "❌ Update script not found: $scriptPath"
+            exit 1
+          }
+
       - name: Install Databricks CLI
         shell: pwsh
         run: |
@@ -309,6 +343,42 @@ jobs:
           }
 
           Write-Host "✅ Deployment completed successfully!"
+
+      - name: Sync workspace and remove deleted files
+        shell: pwsh
+        env:
+          DATABRICKS_CONFIG_PROFILE: ${{ env.ENV_NAME }}
+        run: |
+          Write-Host "🔄 Syncing workspace and removing deleted files..."
+
+          # Set execution policy for this session
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+
+          # Unblock the script
+          $scriptPath = ".github/workflows/sync-with-deletion.ps1"
+          if (Test-Path $scriptPath) {
+            Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
+
+            # Determine workspace path based on environment
+            $workspacePath = switch ($env:ENV_NAME) {
+              "DEV"  { "/Workspace/AMAL_DEV/DEV" }
+              "QA"   { "/Workspace/QA" }
+              "PROD" { "/Workspace/PROD" }
+              default { "/Workspace/$env:ENV_NAME" }
+            }
+
+            Write-Host "🎯 Target workspace path: $workspacePath"
+
+            # Run the sync script
+            & $scriptPath -Environment $env:ENV_NAME -SourceDir "AMALDAB/DataPlatform" -WorkspacePath $workspacePath
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Warning "⚠️  Sync with deletion encountered issues (non-critical)"
+              # Don't fail the deployment if sync has issues
+            }
+          } else {
+            Write-Warning "⚠️  Sync script not found: $scriptPath (skipping deletion sync)"
+          }
 
   # Post-deployment summary
   deployment-summary:

@@ -34,10 +34,39 @@ targets:
         Environment: Dev
 
     variables:
+      # Unity Catalog configuration
       catalog_name:
         default: ab_dev_catalog
+
+      # Azure Key Vault configuration
+      key_vault_scope:
+        default: kv-az-dbricks-dev-001
+
+      # Logger configuration
+      logger_directory:
+        default: /Volumes/ab_dev_catalog/config/logger
+
+      # Axiom storage paths
+      axiom_archive:
+        default: abfss://dev-external-location@stgazdbricksdev001.dfs.core.windows.net/archive/axiom/
+      axiom_input:
+        default: abfss://dev-external-location@stgazdbricksdev001.dfs.core.windows.net/input/axiom/
+      axiom_volume:
+        default: /Volumes/ab_dev_catalog/config/axiom/
+
+      # Employee flag path
+      employee_flag_path:
+        default: /Volumes/ab_dev_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
+
+      # Marketing source system
+      marketing_source_system:
+        default: NYHQ_PROD
+
+      # Notification configuration
       email_notifications:
         default: pandi.anbu@zeb.co
+
+      # Git branch
       git_branch:
         default: dev
 
@@ -64,10 +93,39 @@ targets:
         Environment: QA
 
     variables:
+      # Unity Catalog configuration
       catalog_name:
-        default: ab_qa_catalog  # Changed from ab_uat_catalog to ab_qa_catalog for consistency
+        default: ab_qa_catalog
+
+      # Azure Key Vault configuration
+      key_vault_scope:
+        default: kv-az-dbricks-qa-001
+
+      # Logger configuration
+      logger_directory:
+        default: /Volumes/ab_qa_catalog/config/logger
+
+      # Axiom storage paths
+      axiom_archive:
+        default: abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/archive/axiom/
+      axiom_input:
+        default: abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/input/axiom/
+      axiom_volume:
+        default: /Volumes/ab_qa_catalog/config/axiom/
+
+      # Employee flag path
+      employee_flag_path:
+        default: /Volumes/ab_qa_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
+
+      # Marketing source system
+      marketing_source_system:
+        default: NYHQ_PROD
+
+      # Notification configuration
       email_notifications:
         default: pandi.anbu@zeb.co
+
+      # Git branch
       git_branch:
         default: qa
 
@@ -93,10 +151,39 @@ targets:
         Environment: Prod
 
     variables:
+      # Unity Catalog configuration
       catalog_name:
         default: ab_prod_catalog
+
+      # Azure Key Vault configuration
+      key_vault_scope:
+        default: kv-az-dbricks-prod-001
+
+      # Logger configuration
+      logger_directory:
+        default: /Volumes/ab_prod_catalog/config/logger
+
+      # Axiom storage paths
+      axiom_archive:
+        default: abfss://prod-external-location@stgazdbricksprod001.dfs.core.windows.net/archive/axiom/
+      axiom_input:
+        default: abfss://prod-external-location@stgazdbricksprod001.dfs.core.windows.net/input/axiom/
+      axiom_volume:
+        default: /Volumes/ab_prod_catalog/config/axiom/
+
+      # Employee flag path
+      employee_flag_path:
+        default: /Volumes/ab_prod_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv
+
+      # Marketing source system
+      marketing_source_system:
+        default: NYHQ_PROD
+
+      # Notification configuration
       email_notifications:
         default: pandi.anbu@zeb.co
+
+      # Git branch
       git_branch:
         default: prod
 
