@@ -2,7 +2,7 @@
 bundle:
   name: amaldatabricks
   uuid: 98bee946-7642-4fd2-beb9-d89c27ed0c2c
-  
+
 include:
   - resources/**/*.yml
   - resources/*.yml
@@ -17,6 +17,25 @@ artifacts:
   notebooks:
     files:
       - source: DataPlatform/**/*.py
+
+# Bundle-level variable declarations (required for validation)
+variables:
+  catalog_name:
+    description: "Unity Catalog name"
+  key_vault_scope:
+    description: "Azure Key Vault scope name"
+  logger_directory:
+    description: "Logger directory path in Unity Catalog volumes"
+  axiom_archive:
+    description: "Axiom archive storage path (ABFSS)"
+  axiom_input:
+    description: "Axiom input storage path (ABFSS)"
+  axiom_volume:
+    description: "Axiom volume path in Unity Catalog"
+  email_notifications:
+    description: "Email address for job notifications"
+  git_branch:
+    description: "Git branch name"
 
 targets:
   DEV:
