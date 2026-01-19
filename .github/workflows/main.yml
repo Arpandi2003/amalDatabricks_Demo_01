@@ -268,7 +268,43 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "📦 Installing Databricks CLI..."
-          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.ps1 | pwsh
+
+          # Download and install Databricks CLI
+          $ProgressPreference = 'SilentlyContinue'
+
+          # Determine OS and architecture
+          $os = "windows"
+          $arch = "amd64"
+
+          # Get latest version
+          $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/databricks/cli/releases/latest"
+          $version = $latestRelease.tag_name.TrimStart('v')
+
+          Write-Host "📥 Downloading Databricks CLI version $version..."
+
+          # Download URL
+          $downloadUrl = "https://github.com/databricks/cli/releases/download/v$version/databricks_cli_${version}_${os}_${arch}.zip"
+          $zipPath = "$env:TEMP\databricks-cli.zip"
+          $extractPath = "$env:TEMP\databricks-cli"
+
+          # Download
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath
+
+          # Extract
+          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+          # Move to a location in PATH
+          $installPath = "$env:USERPROFILE\.databricks\cli"
+          New-Item -ItemType Directory -Path $installPath -Force | Out-Null
+          Copy-Item -Path "$extractPath\databricks.exe" -Destination "$installPath\databricks.exe" -Force
+
+          # Add to PATH for this session
+          $env:PATH = "$installPath;$env:PATH"
+
+          # Add to GitHub PATH for subsequent steps
+          "$installPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          # Verify installation
           databricks --version
           Write-Host "✅ Databricks CLI installed successfully"
 
