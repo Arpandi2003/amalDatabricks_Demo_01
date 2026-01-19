@@ -38,31 +38,74 @@ if (-not $bundleConfig.targets.ContainsKey($Environment)) {
 $targetConfig = $bundleConfig.targets[$Environment]
 $variables = $targetConfig.variables
 
-# Extract variable values (handle both direct values and default values)
-$keyVaultScope = if ($variables.key_vault_scope.default) { $variables.key_vault_scope.default } else { $variables.key_vault_scope }
-$catalogName = if ($variables.catalog_name.default) { $variables.catalog_name.default } else { $variables.catalog_name }
-$loggerDirectory = if ($variables.logger_directory.default) { $variables.logger_directory.default } else { $variables.logger_directory }
-$axiomArchive = if ($variables.axiom_archive.default) { $variables.axiom_archive.default } else { $variables.axiom_archive }
-$axiomInput = if ($variables.axiom_input.default) { $variables.axiom_input.default } else { $variables.axiom_input }
-$axiomVolume = if ($variables.axiom_volume.default) { $variables.axiom_volume.default } else { $variables.axiom_volume }
-
-# Environment-specific values not in databricks.yml (notebook-only configuration)
+# Environment-specific configuration (notebook-specific values)
 switch ($Environment) {
     'DEV' {
+        # Unity Catalog configuration
+        $catalogName = 'ab_dev_catalog'
+
+        # Azure Key Vault configuration
+        $keyVaultScope = 'kv-az-dbricks-dev-001'
+
+        # Logger configuration
+        $loggerDirectory = '/Volumes/ab_dev_catalog/config/logger'
+
+        # Axiom storage paths
+        $axiomArchive = 'abfss://dev-external-location@stgazdbricksdev001.dfs.core.windows.net/archive/axiom/'
+        $axiomInput = 'abfss://dev-external-location@stgazdbricksdev001.dfs.core.windows.net/input/axiom/'
+        $axiomVolume = '/Volumes/ab_dev_catalog/config/axiom/'
+
+        # Employee flag path
         $employeeFlagPath = '/Volumes/ab_dev_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+
+        # Marketing source system
         $marketingSourceSystem = 'NYHQ_PROD'
     }
     'QA' {
+        # Unity Catalog configuration
+        $catalogName = 'ab_qa_catalog'
+
+        # Azure Key Vault configuration
+        $keyVaultScope = 'kv-az-dbricks-qa-001'
+
+        # Logger configuration
+        $loggerDirectory = '/Volumes/ab_qa_catalog/config/logger'
+
+        # Axiom storage paths
+        $axiomArchive = 'abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/archive/axiom/'
+        $axiomInput = 'abfss://qa-external-location@stgazdbricksqa001.dfs.core.windows.net/input/axiom/'
+        $axiomVolume = '/Volumes/ab_qa_catalog/config/axiom/'
+
+        # Employee flag path
         $employeeFlagPath = '/Volumes/ab_qa_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+
+        # Marketing source system
         $marketingSourceSystem = 'NYHQ_PROD'
     }
     'PROD' {
+        # Unity Catalog configuration
+        $catalogName = 'ab_prod_catalog'
+
+        # Azure Key Vault configuration
+        $keyVaultScope = 'kv-az-dbricks-prod-001'
+
+        # Logger configuration
+        $loggerDirectory = '/Volumes/ab_prod_catalog/config/logger'
+
+        # Axiom storage paths
+        $axiomArchive = 'abfss://prod-external-location@stgazdbricksprod001.dfs.core.windows.net/archive/axiom/'
+        $axiomInput = 'abfss://prod-external-location@stgazdbricksprod001.dfs.core.windows.net/input/axiom/'
+        $axiomVolume = '/Volumes/ab_prod_catalog/config/axiom/'
+
+        # Employee flag path
         $employeeFlagPath = '/Volumes/ab_prod_catalog/bronze/unstructured/Employee_Flag/employee_flag.csv'
+
+        # Marketing source system
         $marketingSourceSystem = 'NYHQ_PROD'
     }
 }
 
-Write-Host "✅ Extracted variables from databricks.yml:"
+Write-Host "✅ Environment-specific configuration for $Environment:"
 Write-Host "   - Key Vault Scope: $keyVaultScope"
 Write-Host "   - Catalog Name: $catalogName"
 Write-Host "   - Logger Directory: $loggerDirectory"
