@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    job-dependency:
+      name: Job_Dependency
+      tasks:
+      - task_key: Job_Dependency
+        run_if: ALL_SUCCESS
+        run_job_task:
+          job_id: 749851830571889
+          pipeline_params:
+            full_refresh: false
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

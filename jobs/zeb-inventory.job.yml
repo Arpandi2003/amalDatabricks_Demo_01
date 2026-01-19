@@ -1,0 +1,14 @@
+resources:
+  jobs:
+    zeb-inventory:
+      name: zeb_inventory
+      tasks:
+      - task_key: test
+        run_if: ALL_SUCCESS
+        spark_python_task:
+          python_file: /Workspace/zeb_Inventory/zeb_migaration.py
+        job_cluster_key: job_cluster_zeb_inventory
+        timeout_seconds: 0
+        email_notifications: {}
+      timeout_seconds: 0
+      max_concurrent_runs: 1

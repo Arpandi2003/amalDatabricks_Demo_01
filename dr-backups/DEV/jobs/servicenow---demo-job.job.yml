@@ -1,0 +1,11 @@
+resources:
+  jobs:
+    servicenow---demo-job:
+      name: ServiceNow - Demo job
+      tasks:
+      - task_key: ServiceNow_-_Demo_job
+        run_if: ALL_SUCCESS
+        pipeline_task:
+          pipeline_id: 60afd742-4e4a-4cb7-95f3-3b976c52cd65
+        timeout_seconds: 0
+      max_concurrent_runs: 1

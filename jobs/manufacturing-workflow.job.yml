@@ -1,0 +1,142 @@
+resources:
+  jobs:
+    manufacturing-workflow:
+      name: Manufacturing Workflow
+      tasks:
+      - task_key: SilvertoGoldFactQualityControl
+        depends_on:
+        - task_key: SilvertoGoldDimRawMaterial
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Gold/FactQualityControl
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: SilvertoGoldDimRawMaterial
+        depends_on:
+        - task_key: SilvertoGoldDimproductMaster
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Gold/DimRawMaterial
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: SilvertoGoldFactMaterialUsage
+        depends_on:
+        - task_key: SilvertoGoldDimRawMaterial
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Gold/FactMaterialUsage
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: ManufacturingSourcetoBronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Extraction/Bronze/SourceToBronze
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: BronzetosilverDimProductMaster
+        depends_on:
+        - task_key: ManufacturingSourcetoBronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Silver/DimProductMaster
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: BronzetosilverDimRawMaterial
+        depends_on:
+        - task_key: BronzetosilverDimProductMaster
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Silver/DimRawMaterial
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: SilvertoGoldFactEquipmentUsage
+        depends_on:
+        - task_key: SilvertoGoldDimRawMaterial
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Gold/FactEquipmentUsage
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: SilvertoGoldDimproductMaster
+        depends_on:
+        - task_key: BronzetosilverDimRawMaterial
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Gold/DimProductMaster
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: SilvertoGoldFactProduction
+        depends_on:
+        - task_key: SilvertoGoldDimRawMaterial
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /dataplatform/Gold/FactProduction
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

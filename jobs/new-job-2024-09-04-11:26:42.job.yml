@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    new-job-2024-09-04-11:26:42:
+      name: New Job 2024-09-04 11:26:42
+      tasks:
+      - task_key: Test
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sripriyadarshinirajan@avatest.in/Data Lake
+            Mount
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

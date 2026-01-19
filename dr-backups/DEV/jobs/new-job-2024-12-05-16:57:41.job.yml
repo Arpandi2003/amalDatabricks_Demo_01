@@ -1,0 +1,28 @@
+resources:
+  jobs:
+    new-job-2024-12-05-16:57:41:
+      name: New Job 2024-12-05 16:57:41
+      tasks:
+      - task_key: Test
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Finance Demo/Bronze/Bronze_Extraction
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Silver
+        depends_on:
+        - task_key: Test
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Finance Demo/Silver/Bronze_To_Silver_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

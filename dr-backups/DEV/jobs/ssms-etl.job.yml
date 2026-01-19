@@ -1,0 +1,40 @@
+resources:
+  jobs:
+    ssms-etl:
+      name: SSMS ETL
+      tasks:
+      - task_key: BRONZE
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sri.lakshmanan@avatest.in/src/ETL/bronze/NB_Extraction
+          source: WORKSPACE
+          warehouse_id: fab9bbb16d5a3319
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: GOLD
+        depends_on:
+        - task_key: SILVER
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sri.lakshmanan@avatest.in/src/ETL/gold/NB_Gold_Transformations
+          source: WORKSPACE
+          warehouse_id: fab9bbb16d5a3319
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: SILVER
+        depends_on:
+        - task_key: BRONZE
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sri.lakshmanan@avatest.in/src/ETL/silver/NB_Silver_Transfomations
+          source: WORKSPACE
+          warehouse_id: fab9bbb16d5a3319
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

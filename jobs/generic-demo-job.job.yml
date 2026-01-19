@@ -1,0 +1,230 @@
+resources:
+  jobs:
+    generic-demo-job:
+      name: Generic_Demo_Job
+      tasks:
+      - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Bronze/NB_SQLServer_BronzeLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_InvoiceLineItem_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_InvoiceLineItem_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_Service_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Service_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_DimProduct_GoldLoad
+        depends_on:
+        - task_key: PL_Product_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_Product_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: NB_Insurance_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Insurance_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_Inventory_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Inventory_Silverload
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_FactSales_GoldLoad
+        depends_on:
+        - task_key: PL_DimInvoice_GoldLoad
+        - task_key: PL_DimPayment_GoldLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Fact_Sales_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+      - task_key: PL_DimEmployee_GoldLoad
+        depends_on:
+        - task_key: PL_Employee_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_Employee_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_DimCustomer_GoldLoad
+        depends_on:
+        - task_key: PL_Customer_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_Customer_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_DimService_GoldLoad
+        depends_on:
+        - task_key: PL_Service_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_Service_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_DimPayment_GoldLoad
+        depends_on:
+        - task_key: PL_Payment_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_payment_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_DimInvoice_GoldLoad
+        depends_on:
+        - task_key: PL_Invoice_SilverLoad
+        - task_key: PL_InvoiceLineItem_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_Invoice_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_DimInsurance_GoldLoad
+        depends_on:
+        - task_key: NB_Insurance_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_Insurance_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_Customer_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Customer_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_Employee_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Employee_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_Product_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Product_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_DimInventory_GoldLoad
+        depends_on:
+        - task_key: PL_Inventory_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Dim_Inventory_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_Payment_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Payment_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_FactProductSales_GoldLoad
+        depends_on:
+        - task_key: PL_DimInventory_GoldLoad
+        - task_key: PL_DimInvoice_GoldLoad
+        - task_key: PL_DimProduct_GoldLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Gold/NB_Fact_ProductSales_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: PL_Invoice_SilverLoad
+        depends_on:
+        - task_key: PL_SQLServer_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Generic_Demo/Silver/NB_Invoice_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

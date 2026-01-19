@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    its---cicd-automation:
+      name: ITS - CICD Automation
+      tasks:
+      - task_key: CICD_test_run
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/kishore.n@avatest.in/CICD Demp
+          base_parameters:
+            releasenumber: '{{job.parameters.release_id}}'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

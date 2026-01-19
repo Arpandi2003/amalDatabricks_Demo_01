@@ -1,0 +1,7 @@
+resources:
+  jobs:
+    task-2:
+      name: Task 2
+      tasks: []
+      timeout_seconds: 0
+      max_concurrent_runs: 1

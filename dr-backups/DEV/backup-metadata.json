@@ -1,0 +1,11 @@
+{
+  "environment": "DEV",
+  "timestamp": "2026-01-19-18-02",
+  "backup_date": "2026-01-19 18:05:26 UTC",
+  "workspace_url": "https://adb-201068313543333.13.azuredatabricks.net",
+  "triggered_by": "Arpandi2003",
+  "workflow_run_id": "21147303293",
+  "git_commit": "acd72253540474dd619a946a3518b2544e4e9008",
+  "backup_type": "full",
+  "branch_name": "dr-backups/DEV"
+}

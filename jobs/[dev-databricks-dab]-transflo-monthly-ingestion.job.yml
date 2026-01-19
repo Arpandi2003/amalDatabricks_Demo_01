@@ -1,0 +1,55 @@
+resources:
+  jobs:
+    '[dev-databricks-dab]-transflo-monthly-ingestion':
+      name: '[dev databricks_dab] Transflo_Monthly_Ingestion'
+      tasks:
+      - task_key: Sharepoint_Extraction_Errorlog_v2
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: bundles/Transflo/Monthly_Ingestion/databricks_scripts/sharepoint
+          base_parameters:
+            catalog: cmidw_dev
+            goldSchema: gold
+            schema: silver
+            schemaName: bronze
+          source: GIT
+        job_cluster_key: Transflo_job_cluster
+        libraries:
+        - maven:
+            coordinates: com.databricks.labs:overwatch_2.12:0.7.1.3
+        timeout_seconds: 0
+        email_notifications: {}
+      - task_key: Transflo_Monthly_EmailData
+        depends_on:
+        - task_key: Sharepoint_Extraction_Errorlog_v2
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: bundles/Transflo/Monthly_Ingestion/databricks_scripts/silverlayer_other_means_transformation
+          base_parameters:
+            Bronze_Schema: bronze
+            Catalog: cmidw_dev
+            table_name: transflo_email_consolidated_mdata
+          source: GIT
+        job_cluster_key: Transflo_job_cluster
+        libraries:
+        - maven:
+            coordinates: com.databricks.labs:overwatch_2.12:0.7.1.3
+        timeout_seconds: 0
+        email_notifications: {}
+      schedule:
+        quartz_cron_expression: 0 0 13 1 * ?
+        timezone_id: IST
+        pause_status: PAUSED
+      email_notifications:
+        on_failure:
+        - balakumaran.r@avatest.in
+        - nithilaa.venkatesan@avatest.in
+        - lavanya.t@avatest.in
+        - gajalakshmi@avatest.in
+        - vijayaramuprawin@avatest.in
+      timeout_seconds: 0
+      git_source:
+        git_url: https://avacloudpoc@dev.azure.com/avacloudpoc/DataOps/_git/Databricks-DAB
+        git_provider: azureDevOpsServices
+        git_branch: main
+      max_concurrent_runs: 4

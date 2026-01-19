@@ -1,0 +1,15 @@
+resources:
+  jobs:
+    zenithcrm-confirmed:
+      name: ZenithCRM_Confirmed
+      tasks:
+      - task_key: ZenithCRM_Confirmed
+        run_if: ALL_SUCCESS
+        pipeline_task:
+          pipeline_id: dddf6740-3424-44c0-bf8f-974924224c2c
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

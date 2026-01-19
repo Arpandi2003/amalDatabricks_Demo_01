@@ -1,0 +1,22 @@
+resources:
+  jobs:
+    step-1:
+      name: Step_1
+      tasks:
+      - task_key: Condition
+        run_if: ALL_SUCCESS
+        condition_task:
+          op: EQUAL_TO
+          left: value
+          right: PASS
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

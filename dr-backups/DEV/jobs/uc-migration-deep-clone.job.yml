@@ -1,0 +1,32 @@
+resources:
+  jobs:
+    uc-migration-deep-clone:
+      name: UC_Migration_Deep_Clone
+      tasks:
+      - task_key: Deep_Clone_Batch1
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/UC Migration Framework/3. NB_CTAS_&_DeepClone
+          base_parameters:
+            batch: '3'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Deep_Clone_Batch2
+        depends_on:
+        - task_key: Deep_Clone_Batch1
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/UC Migration Framework/3. NB_CTAS_&_DeepClone
+          base_parameters:
+            batch: '4'
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

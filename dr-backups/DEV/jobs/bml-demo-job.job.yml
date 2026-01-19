@@ -1,0 +1,92 @@
+resources:
+  jobs:
+    bml-demo-job:
+      name: Bml-Demo-Job
+      tasks:
+      - task_key: CleanedToCurated_Claims
+        depends_on:
+        - task_key: RawToCleaned_ALIS_Claims
+        - task_key: RawToCleaned_ALIS_Policy
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Repos/balakumaran.r@avatest.in/Boston-Mutual-Dataplatform/Datalake/Curated/Claims/NB_CleanedToCurated_Claims
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Extraction_SourceToRaw_Volumes
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Repos/balakumaran.r@avatest.in/Boston-Mutual-Dataplatform/Datalake/Raw/ALIS/NB_Extraction_FileType
+          base_parameters:
+            batch: '3'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: CleanedToCurated_Claims_PolicyTables
+        depends_on:
+        - task_key: RawToCleaned_ALIS_Claims
+        - task_key: RawToCleaned_ALIS_Policy
+        run_if: ALL_DONE
+        notebook_task:
+          notebook_path: /Repos/balakumaran.r@avatest.in/Boston-Mutual-Dataplatform/Datalake/Curated/Claims/NB_CleanedToCurated_Policy
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: RawToCleaned_ALIS_Claims
+        depends_on:
+        - task_key: Extraction_SourceToRaw_Volumes
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Repos/balakumaran.r@avatest.in/Boston-Mutual-Dataplatform/Datalake/Cleaned/ALIS/NB_Raw_To_Cleaned_Claims
+          base_parameters:
+            batch: '4'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Extraction_SourceToRaw
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Repos/balakumaran.r@avatest.in/Boston-Mutual-Dataplatform/Datalake/Raw/ALIS/NB_Extraction_Raw
+          base_parameters:
+            batch: '1'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: RawToCleaned_ALIS_Policy
+        depends_on:
+        - task_key: Extraction_SourceToRaw
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Repos/balakumaran.r@avatest.in/Boston-Mutual-Dataplatform/Datalake/Cleaned/ALIS/NB_Raw_to_Cleaned_Policy
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: DataQuality_Check
+        depends_on:
+        - task_key: CleanedToCurated_Claims
+        - task_key: CleanedToCurated_Claims_PolicyTables
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Repos/balakumaran.r@avatest.in/Boston-Mutual-Dataplatform/Datalake/General/Validation/Data
+            Quality/NB_DataQuality
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

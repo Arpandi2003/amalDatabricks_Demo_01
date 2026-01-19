@@ -1,0 +1,15 @@
+resources:
+  jobs:
+    new-job-2024-09-03-06:17:48:
+      name: New Job 2024-09-03 06:17:48
+      tasks:
+      - task_key: Global_repo
+        run_if: ALL_SUCCESS
+        run_job_task:
+          job_id: 204808959674888
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

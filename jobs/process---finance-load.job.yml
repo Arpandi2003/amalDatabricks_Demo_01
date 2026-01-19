@@ -1,0 +1,47 @@
+resources:
+  jobs:
+    process---finance-load:
+      name: Process - Finance Load
+      tasks:
+      - task_key: Gold_Claims
+        depends_on:
+        - task_key: Silver_Claims_Load
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Claim_Gold_Load
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+      - task_key: Silver_Claims_Load
+        depends_on:
+        - task_key: Bronze_Load
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Claim_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Bronze_Load
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Bronze/NB_Extraction_SQLServer_To_Bronze
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

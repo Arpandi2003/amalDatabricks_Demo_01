@@ -1,0 +1,28 @@
+resources:
+  jobs:
+    zenithcrm-extraction:
+      name: ZenithCRM_Extraction
+      tasks:
+      - task_key: ZenithCRM_StageToRaw
+        depends_on:
+        - task_key: ZenithCRM_Extraction
+        run_if: ALL_SUCCESS
+        pipeline_task:
+          pipeline_id: 9ccb1b25-482e-4010-b2e0-97204b3b0d24
+        timeout_seconds: 0
+        email_notifications: {}
+      - task_key: ZenithCRM_Extraction
+        run_if: ALL_SUCCESS
+        pipeline_task:
+          pipeline_id: dddf6740-3424-44c0-bf8f-974924224c2c
+          full_refresh: false
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

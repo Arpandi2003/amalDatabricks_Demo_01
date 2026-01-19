@@ -1,0 +1,29 @@
+resources:
+  jobs:
+    new-job-mar-20,-2025,-04:31-pm:
+      name: New Job Mar 20, 2025, 04:31 PM
+      tasks:
+      - task_key: m_jnkojbmv_
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/balakumaran.r@avatest.in/Untitled Notebook
+            2025-03-05 14:00:28
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: gvjhbkj
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/balakumaran.r@avatest.in/Untitled Notebook
+            2025-03-05 14:00:28
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

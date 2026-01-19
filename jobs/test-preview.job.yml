@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    test-preview:
+      name: Test_Preview
+      tasks:
+      - task_key: Test
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/suriyalakshmivc@avatest.in/Common Notebooks/Logger
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+        environment_key: Default
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

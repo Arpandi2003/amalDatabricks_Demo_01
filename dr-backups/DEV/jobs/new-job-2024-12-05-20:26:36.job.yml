@@ -1,0 +1,27 @@
+resources:
+  jobs:
+    new-job-2024-12-05-20:26:36:
+      name: New Job 2024-12-05 20:26:36
+      tasks:
+      - task_key: PL_Silver_Zone
+        depends_on:
+        - task_key: PL_Task_Bronze_zone
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Dataplatform (1)/Silver/AzureAD/NB_ADuser_SilverLoad
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+      - task_key: PL_Task_Bronze_zone
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Dataplatform (1)/Bronze/NB_AzureAD_BronzeLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

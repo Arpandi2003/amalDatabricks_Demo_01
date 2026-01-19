@@ -1,0 +1,32 @@
+resources:
+  jobs:
+    testrun:
+      name: TestRun
+      tasks:
+      - task_key: Notebook_1
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Users/ganesh@avatest.in/2024-03-27 - DBFS Example
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Notebook2
+        depends_on:
+        - task_key: Notebook_1
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Users/ganesh@avatest.in/Import from Postgres - 2023-09-20
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

@@ -1,0 +1,31 @@
+resources:
+  jobs:
+    uc-migration-ctas:
+      name: UC_Migration_CTAS
+      tasks:
+      - task_key: CTAS_Batch_2
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/UC Migration Framework/3. NB_CTAS_&_DeepClone
+          base_parameters:
+            batch: '2'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: CTAS_Batch_1
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/UC Migration Framework/3. NB_CTAS_&_DeepClone
+          base_parameters:
+            batch: '1'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

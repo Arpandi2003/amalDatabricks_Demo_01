@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    new-job-2024-06-21-18:13:22:
+      name: New Job 2024-06-21 18:13:22
+      tasks:
+      - task_key: Trackvia_To_Bronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/naveenap@avatest.in/Bronze Notebook/Trackvia_To_Bronze
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

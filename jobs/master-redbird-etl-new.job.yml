@@ -1,0 +1,396 @@
+resources:
+  jobs:
+    master-redbird-etl-new:
+      name: Master_RedBird_ETL_New
+      tasks:
+      - task_key: AdvisorAUM_SilverLoad
+        depends_on:
+        - task_key: AdvisorAUM_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/7.NB_AdvisorTeamAUM_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Advisor_SilverLoad
+        depends_on:
+        - task_key: AdvisorPayout_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/6.NB_Advisor_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: FactAdvisorTeamAUM_GoldLoad
+        depends_on:
+        - task_key: AdvisorAUM_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/8.NB_FactAdvisorTeamAUM_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: DimProduct_GoldLoad
+        depends_on:
+        - task_key: Product_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/3.NB_DimProduct_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Employee_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/1.NB_Employee_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: FactAdvisorteamPayout_GoldLoad
+        depends_on:
+        - task_key: AdvisorTeamPayout_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/9.NB_FactAdvisorTeamPayout_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: AdvisorTeamPayoutSplits_SilverLoad
+        depends_on:
+        - task_key: AdvisorPayout_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/9.NB_AdvisorTeamPayoutSplits_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: DimAssetValue_GoldLoad
+        depends_on:
+        - task_key: AssetValue_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/6.NB_DimAssetValue_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Product_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/3.NB_Product_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: AdvisorAUM_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Bronze/3.NB_AdvisorTeamAUM_BronzeLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: TransactionSummary_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/13.NB_TransactionSummary_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: TransactionExtendedDetails_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/12.NB_TransactionExtendedDetails_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: AdvisorPayout_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Bronze/2.NB_AdvisoryTeamPayout_BronzeLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: AccountSummary_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/2.NB_AccountSummary_Dataload
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: AdvisorTeamPayout_SilverLoad
+        depends_on:
+        - task_key: AdvisorPayout_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/8.NB_AdvisorTeamPayout_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: DimTransactionSummary_GoldLoad
+        depends_on:
+        - task_key: TransactionSummary_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/7.NB_DimTransactionSummary_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: AssetValue_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/10.NB_AssetValue_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: DimAccountSummary_GoldLoad
+        depends_on:
+        - task_key: AccountSummary_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/2.NB_DimAccountSummary_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: TransactionType_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/4.NB_TransactionTypes_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: AccountLevelData_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/5.NB_AccountLevelData_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: HouseHoldLevelData_SilverLoad
+        depends_on:
+        - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Silver/11.NB_HouseHoldLevelData_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: OneToOne_GoldLoad
+        depends_on:
+        - task_key: AccountLevelData_SilverLoad
+        - task_key: TransactionType_SilverLoad
+        - task_key: HouseHoldLevelData_SilverLoad
+        - task_key: TransactionExtendedDetails_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/NB_One_To_One_Tables_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: DimEmployee_GoldLoad
+        depends_on:
+        - task_key: Employee_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/1.NB_DimEmployee_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Extraction_BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Bronze/1.NB_Extraction_BronzeLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: FactAdvisorTeamPayoutSplits_GoldLoad
+        depends_on:
+        - task_key: AdvisorTeamPayoutSplits_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/11.NB_FactAdvisorTeamPayoutSplits_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: DimAdvisor_GoldLoad
+        depends_on:
+        - task_key: Advisor_SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Gold/4.NB_DimAdvisor_GoldLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

@@ -1,0 +1,16 @@
+resources:
+  jobs:
+    new-job-2024-12-11-16:36:51:
+      name: New Job 2024-12-11 16:36:51
+      tasks:
+      - task_key: ROM_POC_Task
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/naveenap@avatest.in/ROM_POC_Task
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

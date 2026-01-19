@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    new-job-oct-28,-2025,-07:38-am:
+      name: New Job Oct 28, 2025, 07:38 AM
+      tasks:
+      - task_key: temp
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/vijayaramuprawin@avatest.in/Untitled Notebook
+            2025-02-19 09:23:51
+          source: WORKSPACE
+        job_cluster_key: New_job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    databricks-jobs-test:
+      name: Databricks_Jobs_Test
+      tasks:
+      - task_key: Test
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Manufacturing - Demo/Bronze Notebooks/Extraction-DW-SourceToBronze-Load
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

@@ -1,0 +1,25 @@
+resources:
+  jobs:
+    poc-job:
+      name: poc_job
+      tasks:
+      - task_key: poc_job
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/aathiths@avatest.in/Task/ExcelExport_To_Bronze
+            1
+          source: WORKSPACE
+        job_cluster_key: poc_job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        on_start:
+        - gokul.velu@avasoft.com
+        on_success:
+        - gokul.velu@avasoft.com
+        on_failure:
+        - gokul.velu@avasoft.com
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

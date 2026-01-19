@@ -1,0 +1,161 @@
+resources:
+  jobs:
+    quickmed-demo-pipeline-1:
+      name: QuickMed_Demo_Pipeline_1
+      tasks:
+      - task_key: Silver_Transaction
+        depends_on:
+        - task_key: SIlver_Trip
+        - task_key: Silver_Insurance
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Transaction_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Vehicle
+        depends_on:
+        - task_key: Bronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Vehicle_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Claim
+        depends_on:
+        - task_key: SIlver_Trip
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Claim_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Employee
+        depends_on:
+        - task_key: Bronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Employee_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Bronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Bronze/NB_Extraction_SQLServer_To_Bronze
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: SIlver_Trip
+        depends_on:
+        - task_key: Silver_Customer
+        - task_key: Silver_Service
+        - task_key: Silver_Vehicle
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Trip_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Insurance
+        depends_on:
+        - task_key: Bronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Insurance_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Service
+        depends_on:
+        - task_key: Bronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Service_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Invoice
+        depends_on:
+        - task_key: Silver_Customer
+        - task_key: Silver_Service
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Invoice_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Customer
+        depends_on:
+        - task_key: Bronze
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Customer_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

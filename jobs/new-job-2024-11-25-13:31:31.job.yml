@@ -1,0 +1,56 @@
+resources:
+  jobs:
+    new-job-2024-11-25-13:31:31:
+      name: New Job 2024-11-25 13:31:31
+      tasks:
+      - task_key: gold_product_service
+        depends_on:
+        - task_key: silver_item
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/hari.chandran@avatest.in/Databricks Task/NB_Gold_Dim_Product_Service_GoldLoad
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+      - task_key: silver_item
+        depends_on:
+        - task_key: Extraction
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/hari.chandran@avatest.in/Databricks Task/NB_Silver_Item_SilverLoad
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: gold_customer
+        depends_on:
+        - task_key: silver_customer
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/hari.chandran@avatest.in/Databricks Task/NB_Gold_Dim_Customer_GoldLoad
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: silver_customer
+        depends_on:
+        - task_key: Extraction
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/hari.chandran@avatest.in/Databricks Task/NB_Silver_Customer_SilverLoad
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Extraction
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/hari.chandran@avatest.in/Databricks Task/NB_Extraction_Volumes
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

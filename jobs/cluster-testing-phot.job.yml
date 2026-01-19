@@ -1,0 +1,64 @@
+resources:
+  jobs:
+    cluster-testing-phot:
+      name: Cluster_Testing_Phot
+      tasks:
+      - task_key: Incremental_Load_Medium_Size
+        depends_on:
+        - task_key: Truncate_and_Load
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Silver_A
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Truncate_and_Load
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Bronze_A
+          base_parameters:
+            TableID: 1,2,3
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Incremental_Load_PK
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Bronze_B
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Incremental_Load_Hashkey
+        depends_on:
+        - task_key: Incremental_Load_PK
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Silver
+            B
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

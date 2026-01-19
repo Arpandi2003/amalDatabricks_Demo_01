@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    drop-table:
+      name: Drop_Table
+      tasks:
+      - task_key: UC_drop
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sukeshnd@avatest.in/Drop Table Template
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

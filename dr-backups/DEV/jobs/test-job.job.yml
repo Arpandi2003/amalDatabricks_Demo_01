@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    test-job:
+      name: test_job
+      tasks:
+      - task_key: validation
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/AMAL_DEV/dev/files/DataPlatform/Extraction/NB_FlatFile_Movement
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        max_retries: 1
+        min_retry_interval_millis: 120000
+        retry_on_timeout: false
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

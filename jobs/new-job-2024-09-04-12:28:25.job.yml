@@ -1,0 +1,25 @@
+resources:
+  jobs:
+    new-job-2024-09-04-12:28:25:
+      name: New Job 2024-09-04 12:28:25
+      tasks:
+      - task_key: Looptest
+        run_if: ALL_SUCCESS
+        for_each_task:
+          inputs: '[1,2]'
+          task:
+            task_key: Looptest_iteration
+            run_if: ALL_SUCCESS
+            notebook_task:
+              notebook_path: /Workspace/Users/sripriyadarshinirajan@avatest.in/HKS
+                - Demo/GenETL_DLT_Stage_1_Bronze
+              source: WORKSPACE
+            job_cluster_key: Job_cluster
+            timeout_seconds: 0
+            email_notifications: {}
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

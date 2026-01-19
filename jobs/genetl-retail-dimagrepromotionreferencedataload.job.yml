@@ -1,0 +1,37 @@
+resources:
+  jobs:
+    genetl-retail-dimagrepromotionreferencedataload:
+      name: GenETL-Retail-DimAgrePromotionReferenceDataLoad
+      tasks:
+      - task_key: DimAgrePromotionReference_Silver_to_Gold_DataLoad
+        depends_on:
+        - task_key: DimAgreePromotionReference_Bronze_to_Silver_DataLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Users/gokulrajanbabu@avatest.in/GenETL - Retail(Agreement)/DimAgrePromotionReference/GoldDimAgrePromotionReference
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: DimAgreePromotionReference_Bronze_to_Silver_DataLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Users/gokulrajanbabu@avatest.in/GenETL - Retail(Agreement)/DimAgrePromotionReference/SilverPromotion
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

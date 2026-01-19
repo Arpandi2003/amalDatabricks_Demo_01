@@ -1,0 +1,35 @@
+resources:
+  jobs:
+    cyrface--sharepoint-extraction:
+      name: Cyrface- Sharepoint Extraction
+      tasks:
+      - task_key: Sharepoint_Extraction
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/logesh.regup@avatest.in/Cyrface- POC/Job
+            Notebooks/Cyrface- Sharepoint Extraction
+          base_parameters:
+            tableid_list: '''SP001'',''SP002'',''SP003'',''SP004'',''SP005'''
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Raw_To_Bronze_Extraction
+        depends_on:
+        - task_key: Sharepoint_Extraction
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/logesh.regup@avatest.in/Cyrface- POC/Job
+            Notebooks/Tactics and Techniques Extraction
+          base_parameters:
+            tableid_list: '''B001'''
+          source: WORKSPACE
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+        environment_key: Default
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

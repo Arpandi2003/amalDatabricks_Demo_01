@@ -1,0 +1,7 @@
+resources:
+  jobs:
+    master-job-1:
+      name: Master_Job_1
+      tasks: []
+      timeout_seconds: 0
+      max_concurrent_runs: 1

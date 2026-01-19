@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    master-job:
+      name: Master_Job
+      tasks:
+      - task_key: Notebook1
+        run_if: ALL_SUCCESS
+        run_job_task:
+          job_id: 97842955428274
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

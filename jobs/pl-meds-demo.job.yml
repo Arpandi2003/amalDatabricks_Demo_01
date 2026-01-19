@@ -1,0 +1,328 @@
+resources:
+  jobs:
+    pl-meds-demo:
+      name: PL_Meds_Demo
+      tasks:
+      - task_key: Silver_Invoice_Parks
+        depends_on:
+        - task_key: Silver_Customer
+        - task_key: Silver_Service
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Invoice_Parks_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Services
+        depends_on:
+        - task_key: SIlver_Trip
+        - task_key: Silver_Insurance
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Service_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Insurance
+        depends_on:
+        - task_key: SIlver_Trip
+        - task_key: Silver_Insurance
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Insurance_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Dim_Invoice_Parks
+        depends_on:
+        - task_key: Silver_Invoice_Parks
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Invoice_Parks_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Gold_Trip
+        depends_on:
+        - task_key: SIlver_Trip
+        - task_key: Silver_Insurance
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Trip_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Invoice_Cruises
+        depends_on:
+        - task_key: Silver_Customer
+        - task_key: Silver_Service
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Invoice_Cruise_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Bronze_Load_Cruises
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Bronze/NB_Extraction_SQLServer(Cruises)_To_Bronze
+          base_parameters:
+            TableListIDs: 210,211,212,213.214,215,216,217,218
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Fact_Customer_360
+        depends_on:
+        - task_key: Gold_Customer
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Fact_Customer_360_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Gold_Employee
+        depends_on:
+        - task_key: SIlver_Trip
+        - task_key: Silver_Insurance
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Employee_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Vehicle
+        depends_on:
+        - task_key: SIlver_Trip
+        - task_key: Silver_Insurance
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Vehicle_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Customer
+        depends_on:
+        - task_key: Bronze_Load_Parks
+        - task_key: Bronze_Load_Cruises
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Customer_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Employee
+        depends_on:
+        - task_key: Bronze_Load_Parks
+        - task_key: Bronze_Load_Cruises
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Employee_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Insurance
+        depends_on:
+        - task_key: Bronze_Load_Parks
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Insurance_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Service
+        depends_on:
+        - task_key: Bronze_Load_Parks
+        - task_key: Bronze_Load_Cruises
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Service_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Vehicle
+        depends_on:
+        - task_key: Bronze_Load_Parks
+        - task_key: Bronze_Load_Cruises
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Vehicle_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: SIlver_Trip
+        depends_on:
+        - task_key: Silver_Customer
+        - task_key: Silver_Service
+        - task_key: Silver_Vehicle
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Trip_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Claim
+        depends_on:
+        - task_key: SIlver_Trip
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Silver/NB_Claim_SilverLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Invoice_Cruises
+        depends_on:
+        - task_key: Silver_Invoice_Cruises
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Invoice_Cruises_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Bronze_Load_Parks
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Bronze/NB_Extraction_SQLServer(Parks)_To_Bronze
+          base_parameters:
+            TableListIDs: 209,205,206,207,203,202,204,201
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Customer
+        depends_on:
+        - task_key: SIlver_Trip
+        - task_key: Silver_Insurance
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Customer_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Gold_Dim_Claims
+        depends_on:
+        - task_key: Silver_Claim
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/MedsDemo/Gold/NB_Dim_Claim_Gold_Load
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        on_start:
+        - spencer@xanterra.com
+        on_success:
+        - spencer@xanterra.com
+        on_failure:
+        - spencer@xanterra.com
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

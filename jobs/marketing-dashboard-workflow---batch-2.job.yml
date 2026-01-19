@@ -1,0 +1,52 @@
+resources:
+  jobs:
+    marketing-dashboard-workflow---batch-2:
+      name: Marketing Dashboard Workflow - Batch 2
+      tasks:
+      - task_key: Opportunity_DataLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/svc_pbidasboardmarketing@avatest.in/Marketing_Dashboard/CURRENT-Salesforce_Opportunity_Table
+          source: WORKSPACE
+        job_cluster_key: Marketing_Dashboard_Job_Cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Profile_Extraction
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/svc_pbidasboardmarketing@avatest.in/Marketing_Dashboard/CURRENT-Salesforce_Profile_Extraction
+          source: WORKSPACE
+        job_cluster_key: Marketing_Dashboard_Job_Cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Task_DataLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/svc_pbidasboardmarketing@avatest.in/Marketing_Dashboard/CURRENT-Salesforce_Task_Table
+          source: WORKSPACE
+        job_cluster_key: Marketing_Dashboard_Job_Cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: User_DataLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/svc_pbidasboardmarketing@avatest.in/Marketing_Dashboard/CURRENT-Salesforce_User_Extraction
+          source: WORKSPACE
+        job_cluster_key: Marketing_Dashboard_Job_Cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      schedule:
+        quartz_cron_expression: 14 0 8 ? * Fri
+        timezone_id: Asia/Kolkata
+        pause_status: UNPAUSED
+      email_notifications:
+        on_failure:
+        - logesh.regup@avasoft.com
+        - kavi.nithi@avasoft.com
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

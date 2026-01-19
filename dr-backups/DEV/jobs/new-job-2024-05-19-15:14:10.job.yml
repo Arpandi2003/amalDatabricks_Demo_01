@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    new-job-2024-05-19-15:14:10:
+      name: New Job 2024-05-19 15:14:10
+      tasks:
+      - task_key: ExcelFiles_Bronze_Load
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/RedBird - DataPlatform/Bronze/NB_Extraction_BronzeLoad
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

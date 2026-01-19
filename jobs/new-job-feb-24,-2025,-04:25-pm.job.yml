@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    new-job-feb-24,-2025,-04:25-pm:
+      name: New Job Feb 24, 2025, 04:25 PM
+      tasks:
+      - task_key: Extraction
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/keerthana.narasimman@avatest.in/Bennett/Bronze/NB_Extraction
+            2024-12-26 16:37:11
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

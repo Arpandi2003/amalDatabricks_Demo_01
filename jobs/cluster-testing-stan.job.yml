@@ -1,0 +1,61 @@
+resources:
+  jobs:
+    cluster-testing-stan:
+      name: Cluster_Testing_Stan
+      tasks:
+      - task_key: Silver_B
+        depends_on:
+        - task_key: Bronze_2
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Silver
+            B
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+      - task_key: Bronze_2
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Bronze_B
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_A
+        depends_on:
+        - task_key: Bronze_1
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Silver_A
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Bronze_1
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/dharun@avatest.in/Photon Testing/Bronze_A
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

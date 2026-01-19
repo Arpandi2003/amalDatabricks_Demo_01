@@ -1,0 +1,19 @@
+resources:
+  jobs:
+    zenithcrm-silver:
+      name: ZenithCRM_Silver
+      tasks:
+      - task_key: ZenithCRM_Silver
+        run_if: ALL_SUCCESS
+        pipeline_task:
+          pipeline_id: 487e63ba-fdad-488b-8d9d-c1be157477ce
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

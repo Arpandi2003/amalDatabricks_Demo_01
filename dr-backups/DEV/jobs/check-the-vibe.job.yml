@@ -1,0 +1,22 @@
+resources:
+  jobs:
+    check-the-vibe:
+      name: Check the Vibe
+      tasks:
+      - task_key: WidgetPara
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/pandi.anbu@avatest.in/RBAC-ABAC/Data
+          base_parameters:
+            batch: '30'
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        on_failure:
+        - pandi.anbu@avatest.in
+        no_alert_for_skipped_runs: true
+      timeout_seconds: 0
+      max_concurrent_runs: 1

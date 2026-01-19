@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    chan-job:
+      name: Chan_Job
+      tasks:
+      - task_key: Sample_Job
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/chandru.ramesh@avatest.in/Asset-Bundles-POC/src/notebook
+          source: WORKSPACE
+        job_cluster_key: Sample_Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 4

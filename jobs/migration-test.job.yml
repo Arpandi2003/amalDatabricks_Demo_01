@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    migration-test:
+      name: Migration Test
+      tasks:
+      - task_key: pipeline-task-88ec62b9-50eb-4021-938b-d5959ba305c6
+        run_if: ALL_SUCCESS
+        pipeline_task:
+          pipeline_id: 88ec62b9-50eb-4021-938b-d5959ba305c6
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        on_failure:
+        - nanthana.s@avatest.in
+        no_alert_for_skipped_runs: true
+      timeout_seconds: 0
+      max_concurrent_runs: 1

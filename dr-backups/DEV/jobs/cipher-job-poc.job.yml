@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    cipher-job-poc:
+      name: Cipher_Job_POC
+      tasks:
+      - task_key: Bronze_employee
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/nanthana.s@avatest.in/Cipher POC/Employee
+            Table creation
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      schedule:
+        quartz_cron_expression: 1 0 * * * ?
+        timezone_id: UTC
+        pause_status: PAUSED
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

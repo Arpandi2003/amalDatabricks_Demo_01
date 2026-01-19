@@ -1,0 +1,32 @@
+resources:
+  jobs:
+    new-job-2024-06-13-14:09:03:
+      name: New Job 2024-06-13 14:09:03
+      tasks:
+      - task_key: Extraction_Notebook
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Bronze/NB_Extraction_SQLServer_To_Bronze
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Silver_Load
+        depends_on:
+        - task_key: Extraction_Notebook
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Shared/QuickMed Demo/Silver/NB_Claim_SilverLoad
+          source: WORKSPACE
+        job_cluster_key: Job_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

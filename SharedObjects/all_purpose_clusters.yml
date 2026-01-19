@@ -1,0 +1,683 @@
+resources:
+  clusters:
+    ava-eus-ds-genetl:
+      cluster_name: AVA-EUS-DS-GenETL
+      spark_version: 17.3.x-scala2.13
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_D4s_v3
+      num_workers: 0
+      autoscale:
+        min_workers: 1
+        max_workers: 2
+        target_workers: 1
+      autotermination_minutes: 25
+      custom_tags:
+        Ticket: '7673'
+        Domain: DS
+        Purpose: GenETL
+        x_Owner: Dharun
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: STANDARD
+    '[amal-bab-sp]ava-eus-ds-genetl':
+      cluster_name: '[amal-bab-sp]AVA-EUS-DS-GenETL'
+      spark_version: 16.4.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_D4s_v3
+      num_workers: 0
+      autoscale:
+        min_workers: 1
+        max_workers: 2
+        target_workers: 1
+      autotermination_minutes: 15
+      custom_tags:
+        Environment: Dev
+        x_Owner: Dharun
+        amal_owner: DataEngineering
+        Ticket: '7673'
+        dev: amal_bab_sp
+        Domain: DS
+        Purpose: GenETL
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: STANDARD
+    '[amal-bab-sp]sept-batch-trainee-compute':
+      cluster_name: '[amal-bab-sp]Sept-Batch-Trainee-Compute'
+      spark_version: 16.4.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 1
+        max_workers: 2
+        target_workers: 1
+      autotermination_minutes: 10
+      custom_tags:
+        Environment: Dev
+        amal_owner: DataEngineering
+        dev: amal_bab_sp
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      policy_id: 60643F56F1008808
+      data_security_mode: USER_ISOLATION
+      runtime_engine: STANDARD
+    '[amal-bab-sp]vijayaramuprawins-cluster':
+      cluster_name: '[amal-bab-sp]Vijayaramuprawins-Cluster'
+      spark_version: 16.4.x-scala2.13
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autotermination_minutes: 30
+      custom_tags:
+        ResourceClass: SingleNode
+        Environment: Dev
+        amal_owner: DataEngineering
+        dev: amal_bab_sp
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      policy_id: 60640816D00056D6
+      single_user_name: vijayaramuprawin@avatest.in
+      data_security_mode: SINGLE_USER
+      runtime_engine: STANDARD
+    '[dev]ava-eus-ds-genetl':
+      cluster_name: '[dev]AVA-EUS-DS-GenETL'
+      spark_version: 16.4.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_D4s_v3
+      num_workers: 0
+      autoscale:
+        min_workers: 1
+        max_workers: 2
+        target_workers: 1
+      autotermination_minutes: 15
+      custom_tags:
+        Environment: Dev
+        x_Owner: Dharun
+        amal_owner: DataEngineering
+        Ticket: '7673'
+        Domain: DS
+        Purpose: GenETL
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: STANDARD
+    '[dev]sept-batch-trainee-compute':
+      cluster_name: '[dev]Sept-Batch-Trainee-Compute'
+      spark_version: 16.4.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 1
+        max_workers: 2
+        target_workers: 1
+      autotermination_minutes: 10
+      custom_tags:
+        Environment: Dev
+        amal_owner: DataEngineering
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      policy_id: 60643F56F1008808
+      data_security_mode: USER_ISOLATION
+      runtime_engine: STANDARD
+    '[dev]vijayaramuprawins-cluster':
+      cluster_name: '[dev]Vijayaramuprawins-Cluster'
+      spark_version: 16.4.x-scala2.13
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autotermination_minutes: 30
+      custom_tags:
+        ResourceClass: SingleNode
+        Environment: Dev
+        amal_owner: DataEngineering
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      policy_id: 60640816D00056D6
+      single_user_name: vijayaramuprawin@avatest.in
+      data_security_mode: SINGLE_USER
+      runtime_engine: STANDARD
+    job-697758931128953-run-1045554983971665-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-1045554983971665-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-1050104662283538-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-1050104662283538-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-1094836126585954-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-1094836126585954-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-136649333078773-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-136649333078773-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-145356018426279-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-145356018426279-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-166351118722888-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-166351118722888-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-216228344368981-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-216228344368981-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-224660634484926-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-224660634484926-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-322397089382841-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-322397089382841-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-344705235547983-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-344705235547983-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-398454383280197-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-398454383280197-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-438035943283864-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-438035943283864-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-467581633128556-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-467581633128556-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-49850995952556-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-49850995952556-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-526245302044188-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-526245302044188-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-560813150294156-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-560813150294156-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-566020774321316-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-566020774321316-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-589386160138500-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-589386160138500-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-591800203343826-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-591800203343826-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-651987437538218-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-651987437538218-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-655915288564236-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-655915288564236-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-68893576912355-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-68893576912355-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-703043096999540-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-703043096999540-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-786022919584599-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-786022919584599-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-803596778207650-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-803596778207650-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-816180963437398-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-816180963437398-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-895788564089816-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-895788564089816-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-904992527006414-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-904992527006414-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-945297752236333-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-945297752236333-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    job-697758931128953-run-989466788989961-ga4-dataload-cluster:
+      cluster_name: job-697758931128953-run-989466788989961-GA4-Dataload-cluster
+      spark_version: 14.3.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      driver_node_type_id: Standard_DS3_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 2
+        max_workers: 4
+        target_workers: 2
+      autotermination_minutes: 0
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      data_security_mode: USER_ISOLATION
+      runtime_engine: PHOTON
+    oct-batch-trainee-compute:
+      cluster_name: Oct-Batch-Trainee-Compute
+      spark_version: 16.4.x-scala2.12
+      node_type_id: Standard_DS4_v2
+      driver_node_type_id: Standard_DS4_v2
+      num_workers: 0
+      autoscale:
+        min_workers: 1
+        max_workers: 3
+        target_workers: 1
+      autotermination_minutes: 30
+      azure_attributes:
+        first_on_demand: 1
+        availability: ON_DEMAND_AZURE
+        spot_bid_max_price: -1.0
+      policy_id: 60643F56F1008808
+      data_security_mode: USER_ISOLATION
+      runtime_engine: STANDARD

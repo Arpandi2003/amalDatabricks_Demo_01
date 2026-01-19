@@ -1,0 +1,46 @@
+resources:
+  jobs:
+    databrickslearning-job:
+      name: DatabricksLearning_Job
+      tasks:
+      - task_key: SilverLoad
+        depends_on:
+        - task_key: BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sivachandran@avatest.in/Databricks Learning/Silver
+            Notebook/DL_Silver_Notebook
+          base_parameters:
+            TableListIDs: 4,5,6
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: BronzeLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sivachandran@avatest.in/Databricks Learning/Bronze
+            Notebook/DL_Bronze_Notebook
+          base_parameters:
+            TableListIDs: 1,2,3
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+        webhook_notifications: {}
+      - task_key: Gold_Notebook
+        depends_on:
+        - task_key: SilverLoad
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Users/sivachandran@avatest.in/Databricks Learning/Gold
+            Notebook/DL_Gold_Notebook
+          source: WORKSPACE
+        existing_cluster_id: 0130-103345-kb0sn6su
+        timeout_seconds: 0
+        email_notifications: {}
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1

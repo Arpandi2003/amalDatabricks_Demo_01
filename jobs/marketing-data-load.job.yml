@@ -1,0 +1,42 @@
+resources:
+  jobs:
+    marketing-data-load:
+      name: Marketing Data Load
+      tasks:
+      - task_key: GA4_Dataload
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Marketing Content Performance PBI Dashboard/GA4
+            Dataload
+          source: WORKSPACE
+        job_cluster_key: GA4_Dataload_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      - task_key: Salesforce_lead_Load
+        run_if: ALL_SUCCESS
+        notebook_task:
+          notebook_path: /Workspace/Marketing Content Performance PBI Dashboard/Salesforce_Leads_Extraction
+          source: WORKSPACE
+        job_cluster_key: GA4_Dataload_cluster
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+        webhook_notifications: {}
+      schedule:
+        quartz_cron_expression: 0 30 13,14,15,16,17,18,19,20,21,22 ? * * *
+        timezone_id: Asia/Kolkata
+        pause_status: UNPAUSED
+      email_notifications:
+        on_failure:
+        - vijayalagesan@avatest.in
+        no_alert_for_skipped_runs: true
+      timeout_seconds: 0
+      max_concurrent_runs: 1

@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    globalrepo-silver:
+      name: GlobalRepo_Silver
+      tasks:
+      - task_key: GlobalRepo_Silver
+        run_if: ALL_SUCCESS
+        pipeline_task:
+          pipeline_id: 4a0bd00b-e577-47b9-ad35-013500259de6
+          full_refresh: false
+        timeout_seconds: 0
+        email_notifications: {}
+        notification_settings:
+          no_alert_for_skipped_runs: false
+          no_alert_for_canceled_runs: false
+          alert_on_last_attempt: false
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      timeout_seconds: 0
+      max_concurrent_runs: 1
