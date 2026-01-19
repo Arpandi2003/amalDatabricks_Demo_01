@@ -65,6 +65,9 @@ targets:
       # Logger configuration
       logger_directory:
         default: /Volumes/ab_dev_catalog/config/logger
+      
+      git_branch:
+        default: dev
 
       # Axiom storage paths
       axiom_archive:
@@ -126,6 +129,8 @@ targets:
         default: pandi.anbu@zeb.co
 
       # Git branch
+      git_branch:
+        default: uat
 
     workspace:
       host: https://adb-201068313543333.13.azuredatabricks.net
@@ -168,6 +173,9 @@ targets:
         default: abfss://prod-external-location@stgazdbricksprod001.dfs.core.windows.net/input/axiom/
       axiom_volume:
         default: /Volumes/ab_prod_catalog/config/axiom/
+      
+      git_branch:
+        default: main
 
       # Notification configuration
       email_notifications:
