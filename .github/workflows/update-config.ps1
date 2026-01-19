@@ -104,3 +104,5 @@ Write-Host "   marketing_source_system = '$marketingSourceSystem'"
 Write-Host ""
 Write-Host "🎉 Configuration update complete!"
 
+# Explicitly exit with success code
+exit 0

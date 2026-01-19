@@ -85,7 +85,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.10'
 
       - name: Install Python dependencies
         shell: pwsh
@@ -244,12 +244,20 @@ jobs:
           if (Test-Path $scriptPath) {
             Unblock-File -Path $scriptPath -ErrorAction SilentlyContinue
 
-            # Run the update script
-            & $scriptPath -Environment $env:ENV_NAME -BundleDir "AMALDAB" -ConfigFile "AMALDAB/DataPlatform/General/NB_Configuration.py"
+            # Run the update script with error handling
+            try {
+              & $scriptPath -Environment $env:ENV_NAME -BundleDir "AMALDAB" -ConfigFile "AMALDAB/DataPlatform/General/NB_Configuration.py"
 
-            if ($LASTEXITCODE -ne 0) {
-              Write-Error "❌ Configuration update failed"
-              exit $LASTEXITCODE
+              if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+                Write-Error "❌ Configuration update failed with exit code: $LASTEXITCODE"
+                exit $LASTEXITCODE
+              }
+
+              Write-Host "✅ Configuration update completed successfully"
+            }
+            catch {
+              Write-Error "❌ Configuration update failed: $_"
+              exit 1
             }
           } else {
             Write-Error "❌ Update script not found: $scriptPath"
