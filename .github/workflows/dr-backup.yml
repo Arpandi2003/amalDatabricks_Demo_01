@@ -1,0 +1,844 @@
+name: Disaster Recovery Backup
+
+# ============================================================================
+# DISASTER RECOVERY BACKUP WORKFLOW
+# ============================================================================
+# Purpose: Create comprehensive backups of ALL Databricks workspace objects
+#          for disaster recovery purposes
+#
+# What Gets Backed Up:
+#   - All clusters (shared and job clusters)
+#   - All SQL warehouses
+#   - All jobs and their configurations
+#   - All cluster policies
+#   - Complete Unity Catalog objects (catalogs, schemas, tables, volumes, functions)
+#   - Storage credentials and external locations
+#   - All connections
+#   - Notebook metadata
+#
+# Backup Storage:
+#   - Commits to separate dr-backups/<environment>/<timestamp> branches
+#   - Unlimited retention via Git history
+#   - Full version control and diff capabilities
+#
+# How to Restore:
+#   1. Checkout the desired backup branch: git checkout dr-backups/PROD/2026-01-17-02-00
+#   2. Review the backed-up configurations
+#   3. Apply using Databricks CLI or API
+#   4. See DISASTER_RECOVERY_RESTORE.md for detailed instructions
+#
+# Independence:
+#   - Runs separately from deployment workflow
+#   - Does NOT interfere with normal deployments
+#   - Uses service principal authentication
+#   - Can run on schedule or manually
+# ============================================================================
+
+on:
+  # Scheduled backup - runs daily at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  
+  # Manual trigger with environment selection
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to backup'
+        required: true
+        type: choice
+        options:
+          - DEV
+          - QA
+          - PROD
+          - ALL
+        default: 'ALL'
+      
+      include_notebooks:
+        description: 'Include notebook metadata backup'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  # ============================================================================
+  # JOB 1: Backup DEV Environment
+  # ============================================================================
+  backup-dev:
+    name: Backup DEV Environment
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' || 
+      github.event.inputs.environment == 'DEV' || 
+      github.event.inputs.environment == 'ALL'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GIT_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests PyYAML
+
+      - name: Create backup directory structure
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
+          BACKUP_DIR="dr-backups/DEV"
+          echo "BACKUP_DIR=${BACKUP_DIR}" >> $GITHUB_ENV
+          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          echo "ENV_NAME=DEV" >> $GITHUB_ENV
+
+          mkdir -p "${BACKUP_DIR}"
+          echo "📁 Created backup directory: ${BACKUP_DIR}"
+
+      - name: Run full backup script
+        env:
+          DATABRICKS_HOST: ${{ vars.DEV_DATABRICKS_HOST }}
+          CLIENT_ID: ${{ vars.DEV_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.DEV_CLIENT_SECRET }}
+        run: |
+          echo "🔧 Running full backup for DEV environment..."
+          echo "📍 Workspace: ${DATABRICKS_HOST}"
+
+          # Validate Service Principal credentials
+          if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
+            echo "❌ Service Principal credentials not found"
+            echo "   Required: DEV_CLIENT_ID (variable) + DEV_CLIENT_SECRET (secret)"
+            exit 1
+          fi
+
+          echo "🔐 Using Service Principal authentication"
+          echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
+
+          python .github/workflows/prerequisites.py \
+            --DATABRICKS_HOST "${DATABRICKS_HOST}" \
+            --CLIENT_ID "${CLIENT_ID}" \
+            --CLIENT_SECRET "${CLIENT_SECRET}" \
+            --full-backup \
+            --output-dir "${BACKUP_DIR}"
+
+          if [ $? -ne 0 ]; then
+            echo "❌ Backup script failed"
+            exit 1
+          fi
+
+          echo "✅ Backup completed successfully"
+
+      - name: Create backup metadata and README
+        run: |
+          # Create backup metadata JSON
+          cat > "${BACKUP_DIR}/backup-metadata.json" << EOF
+          {
+            "environment": "DEV",
+            "timestamp": "${TIMESTAMP}",
+            "backup_date": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")",
+            "workspace_url": "${{ vars.DEV_DATABRICKS_HOST }}",
+            "triggered_by": "${{ github.actor }}",
+            "workflow_run_id": "${{ github.run_id }}",
+            "git_commit": "${{ github.sha }}",
+            "backup_type": "full",
+            "branch_name": "dr-backups/DEV"
+          }
+          EOF
+
+          # Create README for this backup
+          cat > "${BACKUP_DIR}/README.md" << EOF
+          # 🔄 Disaster Recovery Backup - DEV Environment
+
+          **Backup Timestamp**: ${TIMESTAMP}
+          **Backup Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Environment**: DEV
+          **Workspace**: ${{ vars.DEV_DATABRICKS_HOST }}
+          **Triggered By**: ${{ github.actor }}
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## 📁 Backup Contents
+
+          This backup contains:
+
+          - **SharedObjects/** - All shared clusters, SQL warehouses, cluster policies, storage credentials, external locations, and connections
+          - **jobs/** - All job configurations (if full backup mode)
+          - **uc_ddl/** - Unity Catalog DDL statements (catalogs, schemas, tables, volumes, grants)
+          - **backup-metadata.json** - Metadata about this backup
+
+          ---
+
+          ## 🔧 How to Restore from This Backup
+
+          ### Quick Restore Steps:
+
+          1. **Checkout this backup branch**:
+             \`\`\`bash
+             git checkout dr-backups/DEV
+             \`\`\`
+
+          2. **Review the backup contents**:
+             \`\`\`bash
+             ls -la
+             \`\`\`
+
+          3. **Restore Unity Catalog** (most critical):
+             \`\`\`bash
+             export DATABRICKS_HOST="${{ vars.DEV_DATABRICKS_HOST }}"
+             export DATABRICKS_TOKEN="<your-token-or-use-sp>"
+
+             # Execute DDL statements
+             databricks sql execute -f uc_ddl/00_catalogs_schemas_tables_volumes.ddl.sql
+             databricks sql execute -f uc_ddl/99_grants.ddl.sql
+             \`\`\`
+
+          4. **Restore infrastructure** (clusters, warehouses):
+             \`\`\`bash
+             # Copy backup files to your repository
+             cp -r SharedObjects/* /path/to/repo/AMALDAB/resources/SharedObjects/
+             cp -r jobs/* /path/to/repo/AMALDAB/resources/jobs/
+
+             # Deploy using Asset Bundle
+             cd /path/to/repo/AMALDAB
+             databricks bundle deploy -t DEV
+             \`\`\`
+
+          5. **Verify restoration**:
+             - Check Databricks UI for clusters, warehouses, jobs
+             - Verify Unity Catalog objects exist
+             - Test permissions and grants
+
+          ---
+
+          ## 📚 Detailed Documentation
+
+          For complete disaster recovery procedures, see:
+          - **DISASTER_RECOVERY_RESTORE.md** in the main repository
+          - **DR_SYSTEM_IMPLEMENTATION_SUMMARY.md** for system architecture
+
+          ---
+
+          ## ⚠️ Important Notes
+
+          - This is a **point-in-time backup** from ${TIMESTAMP}
+          - Restoring will **overwrite** current configurations
+          - Always **test in DEV** before restoring to PROD
+          - **Backup metadata** is in backup-metadata.json
+
+          ---
+
+          **Backup Type**: Full DR Backup
+          **Status**: ✅ Complete
+          **Retention**: Unlimited (Git history)
+          **Branch**: dr-backups/DEV
+          EOF
+
+          echo "✅ Created backup metadata and README"
+
+      - name: Commit backup to dr-backups branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Use static branch name for this environment
+          BRANCH_NAME="dr-backups/DEV"
+
+          # Check if branch exists
+          if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
+            echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
+            git fetch origin "${BRANCH_NAME}"
+            # Use -- to disambiguate between file and branch
+            git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+            # Remove all existing files
+            git rm -rf . 2>/dev/null || true
+          else
+            echo "🆕 Creating new branch ${BRANCH_NAME}..."
+            git checkout --orphan "${BRANCH_NAME}"
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Copy backup files to root (only the backup directory contents)
+          cp -r "${BACKUP_DIR}"/* .
+
+          # Add only the backup files (not the backup directory itself)
+          git add -A
+
+          # Verify what we're committing
+          echo "📋 Files to be committed:"
+          git status --short
+
+          # Commit with detailed message
+          git commit -m "DR Backup DEV ${TIMESTAMP}" \
+            -m "Environment: DEV" \
+            -m "Timestamp: ${TIMESTAMP}" \
+            -m "Triggered by: ${{ github.actor }}" \
+            -m "Workflow Run: ${{ github.run_id }}" \
+            -m "" \
+            -m "Backup contains: clusters, warehouses, jobs, policies, Unity Catalog, storage, connections" \
+            -m "" \
+            -m "To restore: git checkout ${BRANCH_NAME}" \
+            -m "[skip ci]"
+
+          # Push to remote
+          git push origin "${BRANCH_NAME}" --force
+
+          echo "✅ Backup committed to branch: ${BRANCH_NAME}"
+          echo "📊 Backup size: $(du -sh . | cut -f1)"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Return to original branch
+          git checkout ${{ github.ref_name }} 2>/dev/null || git checkout DEV 2>/dev/null || true
+
+          # Clean up ALL backup artifacts to keep main repository clean
+          rm -rf dr-backups/ 2>/dev/null || true
+          rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Remove any backup files that might have been copied to root during git operations
+          rm -rf jobs/ uc_ddl/ SharedObjects/ backup-metadata.json README.md 2>/dev/null || true
+
+          # Verify cleanup
+          if [ -d "dr-backups" ]; then
+            echo "⚠️  Warning: dr-backups directory still exists"
+          else
+            echo "✅ Main repository is clean (no backup artifacts)"
+          fi
+
+          echo "✅ All backup artifacts cleaned from working directory"
+
+          echo "✅ Cleanup completed"
+
+  # ============================================================================
+  # JOB 2: Backup QA Environment
+  # ============================================================================
+  backup-qa:
+    name: Backup QA Environment
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' ||
+      github.event.inputs.environment == 'QA' ||
+      github.event.inputs.environment == 'ALL'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GIT_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests PyYAML
+
+      - name: Create backup directory structure
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
+          BACKUP_DIR="dr-backups/QA"
+          echo "BACKUP_DIR=${BACKUP_DIR}" >> $GITHUB_ENV
+          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          echo "ENV_NAME=QA" >> $GITHUB_ENV
+
+          mkdir -p "${BACKUP_DIR}"
+          echo "📁 Created backup directory: ${BACKUP_DIR}"
+
+      - name: Run full backup script
+        env:
+          DATABRICKS_HOST: ${{ vars.QA_DATABRICKS_HOST }}
+          CLIENT_ID: ${{ vars.QA_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.QA_CLIENT_SECRET }}
+        run: |
+          echo "🔧 Running full backup for QA environment..."
+          echo "📍 Workspace: ${DATABRICKS_HOST}"
+
+          # Validate Service Principal credentials
+          if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
+            echo "❌ Service Principal credentials not found"
+            echo "   Required: QA_CLIENT_ID (variable) + QA_CLIENT_SECRET (secret)"
+            exit 1
+          fi
+
+          echo "🔐 Using Service Principal authentication"
+          echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
+
+          python .github/workflows/prerequisites.py \
+            --DATABRICKS_HOST "${DATABRICKS_HOST}" \
+            --CLIENT_ID "${CLIENT_ID}" \
+            --CLIENT_SECRET "${CLIENT_SECRET}" \
+            --full-backup \
+            --output-dir "${BACKUP_DIR}"
+
+          if [ $? -ne 0 ]; then
+            echo "❌ Backup script failed"
+            exit 1
+          fi
+
+          echo "✅ Backup completed successfully"
+
+      - name: Create backup metadata and README
+        run: |
+          # Create backup metadata JSON
+          cat > "${BACKUP_DIR}/backup-metadata.json" << EOF
+          {
+            "environment": "QA",
+            "timestamp": "${TIMESTAMP}",
+            "backup_date": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")",
+            "workspace_url": "${{ vars.QA_DATABRICKS_HOST }}",
+            "triggered_by": "${{ github.actor }}",
+            "workflow_run_id": "${{ github.run_id }}",
+            "git_commit": "${{ github.sha }}",
+            "backup_type": "full",
+            "branch_name": "dr-backups/QA"
+          }
+          EOF
+
+          # Create README for this backup
+          cat > "${BACKUP_DIR}/README.md" << EOF
+          # 🔄 Disaster Recovery Backup - QA Environment
+
+          **Backup Timestamp**: ${TIMESTAMP}
+          **Backup Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Environment**: QA
+          **Workspace**: ${{ vars.QA_DATABRICKS_HOST }}
+          **Triggered By**: ${{ github.actor }}
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## 📁 Backup Contents
+
+          This backup contains:
+
+          - **SharedObjects/** - All shared clusters, SQL warehouses, cluster policies, storage credentials, external locations, and connections
+          - **jobs/** - All job configurations (if full backup mode)
+          - **uc_ddl/** - Unity Catalog DDL statements (catalogs, schemas, tables, volumes, grants)
+          - **backup-metadata.json** - Metadata about this backup
+
+          ---
+
+          ## 🔧 How to Restore from This Backup
+
+          ### Quick Restore Steps:
+
+          1. **Checkout this backup branch**:
+             \`\`\`bash
+             git checkout dr-backups/QA
+             \`\`\`
+
+          2. **Review the backup contents**:
+             \`\`\`bash
+             ls -la
+             \`\`\`
+
+          3. **Restore Unity Catalog** (most critical):
+             \`\`\`bash
+             export DATABRICKS_HOST="${{ vars.QA_DATABRICKS_HOST }}"
+             export DATABRICKS_TOKEN="<your-token-or-use-sp>"
+
+             # Execute DDL statements
+             databricks sql execute -f uc_ddl/00_catalogs_schemas_tables_volumes.ddl.sql
+             databricks sql execute -f uc_ddl/99_grants.ddl.sql
+             \`\`\`
+
+          4. **Restore infrastructure** (clusters, warehouses):
+             \`\`\`bash
+             # Copy backup files to your repository
+             cp -r SharedObjects/* /path/to/repo/AMALDAB/resources/SharedObjects/
+             cp -r jobs/* /path/to/repo/AMALDAB/resources/jobs/
+
+             # Deploy using Asset Bundle
+             cd /path/to/repo/AMALDAB
+             databricks bundle deploy -t QA
+             \`\`\`
+
+          5. **Verify restoration**:
+             - Check Databricks UI for clusters, warehouses, jobs
+             - Verify Unity Catalog objects exist
+             - Test permissions and grants
+
+          ---
+
+          ## 📚 Detailed Documentation
+
+          For complete disaster recovery procedures, see:
+          - **DISASTER_RECOVERY_RESTORE.md** in the main repository
+          - **DR_SYSTEM_IMPLEMENTATION_SUMMARY.md** for system architecture
+
+          ---
+
+          ## ⚠️ Important Notes
+
+          - This is a **point-in-time backup** from ${TIMESTAMP}
+          - Restoring will **overwrite** current configurations
+          - Always **test in DEV** before restoring to PROD
+          - **Backup metadata** is in backup-metadata.json
+
+          ---
+
+          **Backup Type**: Full DR Backup
+          **Status**: ✅ Complete
+          **Retention**: Unlimited (Git history)
+          **Branch**: dr-backups/QA
+          EOF
+
+          echo "✅ Created backup metadata and README"
+
+      - name: Commit backup to dr-backups branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Use static branch name for this environment
+          BRANCH_NAME="dr-backups/QA"
+
+          # Check if branch exists
+          if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
+            echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
+            git fetch origin "${BRANCH_NAME}"
+            # Use -- to disambiguate between file and branch
+            git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+            # Remove all existing files
+            git rm -rf . 2>/dev/null || true
+          else
+            echo "🆕 Creating new branch ${BRANCH_NAME}..."
+            git checkout --orphan "${BRANCH_NAME}"
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Copy backup files to root
+          cp -r "${BACKUP_DIR}"/* .
+          git add -A
+
+          # Commit with detailed message
+          git commit -m "DR Backup QA ${TIMESTAMP}" \
+            -m "Environment: QA" \
+            -m "Timestamp: ${TIMESTAMP}" \
+            -m "Triggered by: ${{ github.actor }}" \
+            -m "Workflow Run: ${{ github.run_id }}" \
+            -m "" \
+            -m "Backup contains: clusters, warehouses, jobs, policies, Unity Catalog, storage, connections" \
+            -m "" \
+            -m "To restore: git checkout ${BRANCH_NAME}" \
+            -m "[skip ci]"
+
+          # Push to remote
+          git push origin "${BRANCH_NAME}" --force
+
+          echo "✅ Backup committed to branch: ${BRANCH_NAME}"
+          echo "📊 Backup size: $(du -sh . | cut -f1)"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Return to original branch
+          git checkout ${{ github.ref_name }} 2>/dev/null || git checkout DEV 2>/dev/null || true
+
+          # Clean up ALL backup artifacts to keep main repository clean
+          rm -rf dr-backups/ 2>/dev/null || true
+          rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Remove any backup files that might have been copied to root during git operations
+          rm -rf jobs/ uc_ddl/ SharedObjects/ backup-metadata.json README.md 2>/dev/null || true
+
+          # Verify cleanup
+          if [ -d "dr-backups" ]; then
+            echo "⚠️  Warning: dr-backups directory still exists"
+          else
+            echo "✅ Main repository is clean (no backup artifacts)"
+          fi
+
+          echo "✅ All backup artifacts cleaned from working directory"
+
+  # ============================================================================
+  # JOB 3: Backup PROD Environment
+  # ============================================================================
+  backup-prod:
+    name: Backup PROD Environment
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' ||
+      github.event.inputs.environment == 'PROD' ||
+      github.event.inputs.environment == 'ALL'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GIT_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests PyYAML
+
+      - name: Create backup directory structure
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
+          BACKUP_DIR="dr-backups/PROD"
+          echo "BACKUP_DIR=${BACKUP_DIR}" >> $GITHUB_ENV
+          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+          echo "ENV_NAME=PROD" >> $GITHUB_ENV
+
+          mkdir -p "${BACKUP_DIR}"
+          echo "📁 Created backup directory: ${BACKUP_DIR}"
+
+      - name: Run full backup script
+        env:
+          DATABRICKS_HOST: ${{ vars.PROD_DATABRICKS_HOST }}
+          CLIENT_ID: ${{ vars.PROD_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.PROD_CLIENT_SECRET }}
+        run: |
+          echo "🔧 Running full backup for PROD environment..."
+          echo "📍 Workspace: ${DATABRICKS_HOST}"
+
+          # Validate Service Principal credentials
+          if [ -z "${CLIENT_ID}" ] || [ -z "${CLIENT_SECRET}" ]; then
+            echo "❌ Service Principal credentials not found"
+            echo "   Required: PROD_CLIENT_ID (variable) + PROD_CLIENT_SECRET (secret)"
+            exit 1
+          fi
+
+          echo "🔐 Using Service Principal authentication"
+          echo "   CLIENT_ID: ${CLIENT_ID:0:8}...${CLIENT_ID: -4}"
+
+          python .github/workflows/prerequisites.py \
+            --DATABRICKS_HOST "${DATABRICKS_HOST}" \
+            --CLIENT_ID "${CLIENT_ID}" \
+            --CLIENT_SECRET "${CLIENT_SECRET}" \
+            --full-backup \
+            --output-dir "${BACKUP_DIR}"
+
+          if [ $? -ne 0 ]; then
+            echo "❌ Backup script failed"
+            exit 1
+          fi
+
+          echo "✅ Backup completed successfully"
+
+      - name: Create backup metadata and README
+        run: |
+          # Create backup metadata JSON
+          cat > "${BACKUP_DIR}/backup-metadata.json" << EOF
+          {
+            "environment": "PROD",
+            "timestamp": "${TIMESTAMP}",
+            "backup_date": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")",
+            "workspace_url": "${{ vars.PROD_DATABRICKS_HOST }}",
+            "triggered_by": "${{ github.actor }}",
+            "workflow_run_id": "${{ github.run_id }}",
+            "git_commit": "${{ github.sha }}",
+            "backup_type": "full",
+            "branch_name": "dr-backups/PROD"
+          }
+          EOF
+
+          # Create README for this backup
+          cat > "${BACKUP_DIR}/README.md" << EOF
+          # 🔄 Disaster Recovery Backup - PROD Environment
+
+          **Backup Timestamp**: ${TIMESTAMP}
+          **Backup Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Environment**: PROD
+          **Workspace**: ${{ vars.PROD_DATABRICKS_HOST }}
+          **Triggered By**: ${{ github.actor }}
+          **Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## 📁 Backup Contents
+
+          This backup contains:
+
+          - **SharedObjects/** - All shared clusters, SQL warehouses, cluster policies, storage credentials, external locations, and connections
+          - **jobs/** - All job configurations (if full backup mode)
+          - **uc_ddl/** - Unity Catalog DDL statements (catalogs, schemas, tables, volumes, grants)
+          - **backup-metadata.json** - Metadata about this backup
+
+          ---
+
+          ## 🔧 How to Restore from This Backup
+
+          ### Quick Restore Steps:
+
+          1. **Checkout this backup branch**:
+             \`\`\`bash
+             git checkout dr-backups/PROD
+             \`\`\`
+
+          2. **Review the backup contents**:
+             \`\`\`bash
+             ls -la
+             \`\`\`
+
+          3. **Restore Unity Catalog** (most critical):
+             \`\`\`bash
+             export DATABRICKS_HOST="${{ vars.PROD_DATABRICKS_HOST }}"
+             export DATABRICKS_TOKEN="<your-token-or-use-sp>"
+
+             # Execute DDL statements
+             databricks sql execute -f uc_ddl/00_catalogs_schemas_tables_volumes.ddl.sql
+             databricks sql execute -f uc_ddl/99_grants.ddl.sql
+             \`\`\`
+
+          4. **Restore infrastructure** (clusters, warehouses):
+             \`\`\`bash
+             # Copy backup files to your repository
+             cp -r SharedObjects/* /path/to/repo/AMALDAB/resources/SharedObjects/
+             cp -r jobs/* /path/to/repo/AMALDAB/resources/jobs/
+
+             # Deploy using Asset Bundle
+             cd /path/to/repo/AMALDAB
+             databricks bundle deploy -t PROD
+             \`\`\`
+
+          5. **Verify restoration**:
+             - Check Databricks UI for clusters, warehouses, jobs
+             - Verify Unity Catalog objects exist
+             - Test permissions and grants
+
+          ---
+
+          ## 📚 Detailed Documentation
+
+          For complete disaster recovery procedures, see:
+          - **DISASTER_RECOVERY_RESTORE.md** in the main repository
+          - **DR_SYSTEM_IMPLEMENTATION_SUMMARY.md** for system architecture
+
+          ---
+
+          ## ⚠️ Important Notes
+
+          - This is a **point-in-time backup** from ${TIMESTAMP}
+          - Restoring will **overwrite** current configurations
+          - **PRODUCTION ENVIRONMENT** - Exercise extreme caution!
+          - Always **test in DEV** before restoring to PROD
+          - **Backup metadata** is in backup-metadata.json
+
+          ---
+
+          **Backup Type**: Full DR Backup
+          **Status**: ✅ Complete
+          **Retention**: Unlimited (Git history)
+          **Branch**: dr-backups/PROD
+          EOF
+
+          echo "✅ Created backup metadata and README"
+
+      - name: Commit backup to dr-backups branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Use static branch name for this environment
+          BRANCH_NAME="dr-backups/PROD"
+
+          # Check if branch exists
+          if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
+            echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
+            git fetch origin "${BRANCH_NAME}"
+            # Use -- to disambiguate between file and branch
+            git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+            # Remove all existing files
+            git rm -rf . 2>/dev/null || true
+          else
+            echo "🆕 Creating new branch ${BRANCH_NAME}..."
+            git checkout --orphan "${BRANCH_NAME}"
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Copy backup files to root
+          cp -r "${BACKUP_DIR}"/* .
+          git add -A
+
+          # Commit with detailed message
+          git commit -m "DR Backup PROD ${TIMESTAMP}" \
+            -m "Environment: PROD" \
+            -m "Timestamp: ${TIMESTAMP}" \
+            -m "Triggered by: ${{ github.actor }}" \
+            -m "Workflow Run: ${{ github.run_id }}" \
+            -m "" \
+            -m "Backup contains: clusters, warehouses, jobs, policies, Unity Catalog, storage, connections" \
+            -m "" \
+            -m "To restore: git checkout ${BRANCH_NAME}" \
+            -m "[skip ci]"
+
+          # Push to remote
+          git push origin "${BRANCH_NAME}" --force
+
+          echo "✅ Backup committed to branch: ${BRANCH_NAME}"
+          echo "📊 Backup size: $(du -sh . | cut -f1)"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Return to original branch
+          git checkout ${{ github.ref_name }} 2>/dev/null || git checkout main 2>/dev/null || true
+
+          # Clean up ALL backup artifacts to keep main repository clean
+          rm -rf dr-backups/ 2>/dev/null || true
+          rm -rf "${BACKUP_DIR}" 2>/dev/null || true
+
+          # Remove any backup files that might have been copied to root during git operations
+          rm -rf jobs/ uc_ddl/ SharedObjects/ backup-metadata.json README.md 2>/dev/null || true
+
+          # Verify cleanup
+          if [ -d "dr-backups" ]; then
+            echo "⚠️  Warning: dr-backups directory still exists"
+          else
+            echo "✅ Main repository is clean (no backup artifacts)"
+          fi
+
+          echo "✅ All backup artifacts cleaned from working directory"
+
+  # ============================================================================
+  # JOB 4: Backup Summary
+  # ============================================================================
+  backup-summary:
+    name: Backup Summary
+    runs-on: ubuntu-latest
+    needs: [backup-dev, backup-qa, backup-prod]
+    if: always()
+
+    steps:
+      - name: Generate backup summary
+        run: |
+          echo "============================================================"
+          echo "📊 DISASTER RECOVERY BACKUP SUMMARY"
+          echo "============================================================"
+          echo "🕐 Backup Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          echo "🔗 Workflow Run: ${{ github.run_id }}"
+          echo ""
+          echo "📋 Environment Status:"
+          echo "  DEV:  ${{ needs.backup-dev.result }}"
+          echo "  QA:   ${{ needs.backup-qa.result }}"
+          echo "  PROD: ${{ needs.backup-prod.result }}"
+          echo "============================================================"
+
+          # Check if any backups failed
+          if [[ "${{ needs.backup-dev.result }}" == "failure" ]] || \
+             [[ "${{ needs.backup-qa.result }}" == "failure" ]] || \
+             [[ "${{ needs.backup-prod.result }}" == "failure" ]]; then
+            echo "❌ One or more backups failed"
+            exit 1
+          else
+            echo "✅ All backups completed successfully"
+          fi
+

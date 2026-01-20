@@ -4,64 +4,223 @@
 # Databricks Disaster Recovery Backup Script
 # Extracts configuration-as-code for compute, UC metadata, and permissions.
 
-#known issue 
-    #Update get_databricks_token function to generate the access token for SP
-
 import os
+import sys
 import requests
 import json
 import yaml
 import argparse
 import urllib.parse
 from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
 
 # ===================================================================
 # 🛠️ CONFIGURATION & UTILITIES
 # ===================================================================
 
-import os
-import argparse
-import sys
+# Global variables to store parsed arguments and OAuth token cache
+_ARGS = None
+_OAUTH_TOKEN_CACHE = {
+    "token": None,
+    "expires_at": None
+}
+
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description='Databricks Disaster Recovery Backup Script',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  # Using PAT token (legacy)
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --DATABRICKS_TOKEN dapi123
+
+  # Using Service Principal (recommended for production)
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --CLIENT_ID <sp-id> --CLIENT_SECRET <sp-secret>
+
+  # Full DR backup with Service Principal
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --CLIENT_ID <sp-id> --CLIENT_SECRET <sp-secret> --full-backup
+
+  # Full backup with custom output directory
+  python prerequisites.py --DATABRICKS_HOST https://adb-xxx.net --CLIENT_ID <sp-id> --CLIENT_SECRET <sp-secret> --full-backup --output-dir ./backups/prod
+        '''
+    )
+    parser.add_argument(
+        '--DATABRICKS_HOST',
+        required=True,
+        help='Databricks workspace URL (e.g., https://adb-xxx.azuredatabricks.net)'
+    )
+
+    # Authentication: PAT token (legacy, for backward compatibility)
+    parser.add_argument(
+        '--DATABRICKS_TOKEN',
+        required=False,
+        help='Databricks Personal Access Token (legacy - use Service Principal instead)'
+    )
+
+    # Authentication: Service Principal (recommended for production)
+    parser.add_argument(
+        '--CLIENT_ID',
+        required=False,
+        help='Service Principal Application (Client) ID'
+    )
+    parser.add_argument(
+        '--CLIENT_SECRET',
+        required=False,
+        help='Service Principal Client Secret'
+    )
+
+    # Backup options
+    parser.add_argument(
+        '--full-backup',
+        action='store_true',
+        help='Enable full backup mode: includes ALL clusters (not just shared), all jobs, and notebook metadata'
+    )
+    parser.add_argument(
+        '--output-dir',
+        default='./AMALDAB/resources',
+        help='Output directory for backup files (default: ./AMALDAB/resources)'
+    )
+
+    args = parser.parse_args()
+
+    # Validate authentication credentials
+    has_pat = args.DATABRICKS_TOKEN is not None
+    has_sp = args.CLIENT_ID is not None and args.CLIENT_SECRET is not None
+
+    if not has_pat and not has_sp:
+        parser.error("Authentication required: provide either --DATABRICKS_TOKEN or both --CLIENT_ID and --CLIENT_SECRET")
+
+    if has_pat and has_sp:
+        print("⚠️  Warning: Both PAT token and Service Principal provided. Using Service Principal (recommended).")
+
+    return args
 
 def get_databricks_instance() -> str:
-    """Get Databricks workspace URL from CLI args or env vars (CLI args take precedence)."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--DATABRICKS_HOST",
-        default=os.getenv("DATABRICKS_HOST") or os.getenv("DATABRICKS_WORKSPACE_URL") or os.getenv("DATABRICKS_URL"),
-        help="Databricks workspace URL (e.g., https://adb-123.azuredatabricks.net)"
-    )
-    # Parse only known args (in case other args passed)
-    args, _ = parser.parse_known_args()
-    
-    instance = args.DATABRICKS_HOST
+    """Get Databricks workspace URL from command line args."""
+    global _ARGS
+    if _ARGS is None:
+        raise RuntimeError("Arguments not parsed. Call parse_arguments() first.")
+
+    instance = _ARGS.DATABRICKS_HOST.strip()
+
     if not instance:
-        raise ValueError(
-            "Databricks URL not set. Provide --DATABRICKS_HOST or set DATABRICKS_HOST / DATABRICKS_WORKSPACE_URL."
-        )
-    
-    instance = instance.strip()
+        raise ValueError("Databricks URL not set. Provide --DATABRICKS_HOST argument.")
+
     if not instance.startswith(("https://", "http://")):
         instance = f"https://{instance}"
+
     return instance.rstrip("/")
 
+def get_oauth_token_from_service_principal(client_id: str, client_secret: str, host: str) -> Dict[str, Any]:
+    """
+    Exchange Service Principal credentials for OAuth access token.
+
+    Args:
+        client_id: Service Principal Application (Client) ID
+        client_secret: Service Principal Client Secret
+        host: Databricks workspace URL
+
+    Returns:
+        Dictionary with 'access_token' and 'expires_in' (seconds)
+
+    Raises:
+        requests.exceptions.HTTPError: If token exchange fails
+    """
+    token_url = f"{host}/oidc/v1/token"
+
+    print(f"🔐 Authenticating with Service Principal...")
+    print(f"   Client ID: {client_id[:8]}...{client_id[-4:]}")
+    print(f"   Token URL: {token_url}")
+
+    try:
+        response = requests.post(
+            token_url,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "grant_type": "client_credentials",
+                "scope": "all-apis",
+                "client_id": client_id,
+                "client_secret": client_secret
+            },
+            timeout=30
+        )
+
+        response.raise_for_status()
+        token_data = response.json()
+
+        print(f"✅ OAuth token obtained successfully")
+        print(f"   Token expires in: {token_data.get('expires_in', 'unknown')} seconds")
+
+        return token_data
+
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ OAuth token exchange failed: {e}")
+        if hasattr(e.response, 'text'):
+            print(f"   Response: {e.response.text[:500]}")
+        raise ValueError(f"Service Principal authentication failed. Check CLIENT_ID and CLIENT_SECRET.") from e
+    except Exception as e:
+        print(f"❌ Unexpected error during OAuth token exchange: {e}")
+        raise
 
 def get_databricks_token() -> str:
-    """Get Databricks token from CLI args or env vars (CLI args take precedence)."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--DATABRICKS_TOKEN",
-        default=os.getenv("DATABRICKS_TOKEN") or os.getenv("DATABRICKS_ACCESS_TOKEN"),
-        help="Databricks personal access token (PAT) or OAuth token"
-    )
-    args, _ = parser.parse_known_args()
-    
-    token = args.DATABRICKS_TOKEN
-    if not token:
-        raise ValueError(
-            "Databricks token missing. Provide --DATABRICKS_TOKEN or set DATABRICKS_TOKEN / DATABRICKS_ACCESS_TOKEN."
+    """
+    Get authentication token for Databricks API calls.
+
+    Supports two authentication methods:
+    1. Service Principal (recommended for production) - OAuth token with auto-refresh
+    2. PAT token (legacy) - Direct token usage
+
+    Returns:
+        Valid access token for Databricks API
+    """
+    global _ARGS, _OAUTH_TOKEN_CACHE
+
+    if _ARGS is None:
+        raise RuntimeError("Arguments not parsed. Call parse_arguments() first.")
+
+    # Method 1: Service Principal (recommended)
+    if _ARGS.CLIENT_ID and _ARGS.CLIENT_SECRET:
+        # Check if cached token is still valid
+        if _OAUTH_TOKEN_CACHE["token"] and _OAUTH_TOKEN_CACHE["expires_at"]:
+            if datetime.now() < _OAUTH_TOKEN_CACHE["expires_at"]:
+                # Token still valid, use cached version
+                return _OAUTH_TOKEN_CACHE["token"]
+            else:
+                print("🔄 OAuth token expired, refreshing...")
+
+        # Get new OAuth token
+        token_data = get_oauth_token_from_service_principal(
+            client_id=_ARGS.CLIENT_ID.strip(),
+            client_secret=_ARGS.CLIENT_SECRET.strip(),
+            host=get_databricks_instance()
         )
-    return token.strip()
+
+        # Cache the token with expiration (subtract 5 minutes for safety margin)
+        access_token = token_data["access_token"]
+        expires_in = token_data.get("expires_in", 3600)  # Default 1 hour
+        expires_at = datetime.now() + timedelta(seconds=expires_in - 300)
+
+        _OAUTH_TOKEN_CACHE["token"] = access_token
+        _OAUTH_TOKEN_CACHE["expires_at"] = expires_at
+
+        print(f"✅ Using Service Principal authentication (token valid until {expires_at.strftime('%Y-%m-%d %H:%M:%S')})")
+
+        return access_token
+
+    # Method 2: PAT token (legacy fallback)
+    elif _ARGS.DATABRICKS_TOKEN:
+        token = _ARGS.DATABRICKS_TOKEN.strip()
+
+        if not token:
+            raise ValueError("Databricks token is empty. Provide a valid --DATABRICKS_TOKEN.")
+
+        print("⚠️  Using PAT token authentication (legacy - consider migrating to Service Principal)")
+
+        return token
+
+    else:
+        raise ValueError("No authentication credentials provided. Use --CLIENT_ID + --CLIENT_SECRET or --DATABRICKS_TOKEN.")
 
 def get_headers() -> Dict[str, str]:
     return {
@@ -70,9 +229,20 @@ def get_headers() -> Dict[str, str]:
     }
 
 def api_get(url: str, timeout: int = 60) -> Any:
-    resp = requests.get(url, headers=get_headers(), timeout=timeout)
-    resp.raise_for_status()
-    return resp.json()
+    """Make GET request to Databricks API with error handling."""
+    try:
+        resp = requests.get(url, headers=get_headers(), timeout=timeout)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ HTTP Error: {e}")
+        print(f"   URL: {url}")
+        if hasattr(e.response, 'text'):
+            print(f"   Response: {e.response.text[:200]}")
+        raise
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Request Error: {e}")
+        raise
 
 def safe_write_yml(filepath: str, data: Dict) -> None:
     if not data:
@@ -112,10 +282,24 @@ def sanitize_dict(d: Dict[str, Any], exclude_keys: List[str]) -> Dict[str, Any]:
 # 📥 FETCHERS — INFRASTRUCTURE
 # ===================================================================
 
-def get_all_clusters() -> List[Dict]:
+def get_all_clusters(include_job_clusters: bool = False) -> List[Dict]:
+    """
+    Get all clusters from workspace.
+
+    Args:
+        include_job_clusters: If True, includes job clusters. If False, only shared/all-purpose clusters.
+
+    Returns:
+        List of cluster configurations
+    """
     url = f"{get_databricks_instance()}/api/2.0/clusters/list"
     data = api_get(url)
-    return [c for c in data.get("clusters", []) if c.get("cluster_source") != "JOB"]
+    clusters = data.get("clusters", [])
+
+    if include_job_clusters:
+        return clusters  # Return all clusters including job clusters
+    else:
+        return [c for c in clusters if c.get("cluster_source") != "JOB"]  # Only shared clusters
 
 def get_cluster_policies() -> List[Dict]:
     url = f"{get_databricks_instance()}/api/2.0/policies/clusters/list"
@@ -137,16 +321,29 @@ def get_external_locations() -> List[Dict]:
     data = api_get(url)
     return data.get("external_locations", [])
 
-# def get_jobs() -> List[Dict]:
-#     url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100"
-#     data = api_get(url)
-#     jobs = data.get("jobs", [])
-#     # Paginate if needed
-#     while data.get("has_more"):
-#         offset = data["limit"] + data.get("offset", 0)
-#         data = api_get(f"{url}&offset={offset}")
-#         jobs.extend(data.get("jobs", []))
-#     return jobs
+def get_jobs() -> List[Dict]:
+    """
+    Get all jobs from workspace with pagination support.
+
+    Returns:
+        List of job configurations with expanded task details
+    """
+    url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100"
+    try:
+        data = api_get(url)
+        jobs = data.get("jobs", [])
+
+        # Paginate if needed
+        while data.get("has_more"):
+            offset = len(jobs)
+            paginated_url = f"{get_databricks_instance()}/api/2.1/jobs/list?expand_tasks=true&limit=100&offset={offset}"
+            data = api_get(paginated_url)
+            jobs.extend(data.get("jobs", []))
+
+        return jobs
+    except Exception as e:
+        print(f"⚠️ Warning: Could not fetch jobs: {e}")
+        return []
 
 def get_connections() -> List[Dict]:
     # Note: Connections API is /2.0/, NOT /2.1/unity-catalog/
@@ -387,26 +584,51 @@ def grant_to_sql(grant: Dict, securable_type: str, full_name: str) -> str:
 # ===================================================================
 
 def main():
-    print(" Starting Databricks DR Configuration Backup")
-    base_dir = "./AMALDAB/resources/SharedObjects"
-    ddl_dir = "./AMALDAB/resources/uc_ddl"
+    """Main execution function."""
+    global _ARGS
+
+    # Parse command line arguments first
+    _ARGS = parse_arguments()
+
+    # Determine backup mode
+    full_backup = _ARGS.full_backup
+    output_base = _ARGS.output_dir
+
+    backup_mode = "FULL DISASTER RECOVERY" if full_backup else "STANDARD (Shared Objects Only)"
+
+    print("=" * 70)
+    print("🚀 Starting Databricks Configuration Backup")
+    print("=" * 70)
+    print(f"📍 Workspace: {get_databricks_instance()}")
+    print(f"📁 Output Directory: {output_base}")
+    print(f"🔧 Backup Mode: {backup_mode}")
+    print("=" * 70)
+
+    base_dir = f"{output_base}/SharedObjects"
+    ddl_dir = f"{output_base}/uc_ddl"
+    jobs_dir = f"{output_base}/jobs" if full_backup else None
 
     # ===== 1. INFRASTRUCTURE =====
-    print("\n Fetching infrastructure...")
-    clusters = get_all_clusters()
+    print("\n📦 Fetching infrastructure...")
+
+    # Get clusters (all or shared only based on mode)
+    clusters = get_all_clusters(include_job_clusters=full_backup)
     policies = get_cluster_policies()
     warehouses = get_sql_warehouses()
     scs = get_storage_credentials()
     els = get_external_locations()
-    # jobs = get_jobs()
     connections = get_connections()
 
-    print(f"   • Clusters: {len(clusters)}")
+    # Get jobs only in full backup mode
+    jobs = get_jobs() if full_backup else []
+
+    print(f"   • Clusters: {len(clusters)} {'(including job clusters)' if full_backup else '(shared only)'}")
     print(f"   • Policies: {len(policies)}")
     print(f"   • SQL Warehouses: {len(warehouses)}")
     print(f"   • Storage Credentials: {len(scs)}")
     print(f"   • External Locations: {len(els)}")
-    # print(f"   • Jobs: {len(jobs)}")
+    if full_backup:
+        print(f"   • Jobs: {len(jobs)}")
     print(f"   • Connections (sanitized): {len(connections)}")
 
     resources = {}
@@ -433,9 +655,22 @@ def main():
         resources["external_locations"] = {convert_el(el)[0]: convert_el(el)[1] for el in els}
         safe_write_yml(f"{base_dir}/external_locations.yml", {"resources": {"external_locations": resources["external_locations"]}})
 
-    # if jobs:
-    #     resources["jobs"] = {convert_job(j)[0]: convert_job(j)[1] for j in jobs}
-    #     safe_write_yml(f"{base_dir}/jobs.yml", {"resources": {"jobs": resources["jobs"]}})
+    # Jobs - only in full backup mode
+    if jobs and full_backup:
+        print(f"\n💼 Processing {len(jobs)} jobs...")
+        resources["jobs"] = {}
+
+        # Create separate file for each job
+        for job in jobs:
+            job_name, job_config = convert_job(job)
+            resources["jobs"][job_name] = job_config
+
+            # Write each job to its own file
+            job_file_path = f"{jobs_dir}/{job_name}.job.yml"
+            safe_write_yml(job_file_path, {"resources": {"jobs": {job_name: job_config}}})
+            print(f"   ✅ Saved job '{job_name}' to {job_file_path}")
+
+        print(f"   ✅ Total: {len(jobs)} jobs saved as individual files")
 
     if connections:
         resources["connections"] = {convert_connection(c)[0]: convert_connection(c)[1] for c in connections}
@@ -496,9 +731,32 @@ def main():
     if grant_statements:
         safe_write_sql(f"{ddl_dir}/99_grants.ddl.sql", "\n".join(grant_statements))
 
-    print("\n DR backup completed!")
-    print(f" Bundle configs: {base_dir}")
-    print(f" UC DDL & grants: {ddl_dir}")
+    print("\n" + "=" * 70)
+    print("✅ Backup completed successfully!")
+    print("=" * 70)
+    print(f"🔧 Backup Mode: {backup_mode}")
+    print(f"📦 Bundle configs: {base_dir}")
+    print(f"📜 UC DDL & grants: {ddl_dir}")
+    if full_backup and jobs:
+        print(f"💼 Jobs: {jobs_dir}")
+    print("=" * 70)
+
+    if full_backup:
+        print("\n📋 Full Backup Summary:")
+        print(f"   • Total Clusters: {len(clusters)} (including job clusters)")
+        print(f"   • Total Jobs: {len(jobs)}")
+        print(f"   • SQL Warehouses: {len(warehouses)}")
+        print(f"   • Cluster Policies: {len(policies)}")
+        print("=" * 70)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+        sys.exit(0)
+    except Exception as e:
+        print("\n" + "=" * 70)
+        print(f"❌ ERROR: {str(e)}")
+        print("=" * 70)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
