@@ -1,0 +1,5 @@
+# CODEOWNERS file
+# (note: you must set a protection rule for 'dev' to require CODEOWNER review)
+# Restrict code commits to 'dev' and 'Main' branch - only members of Databricks_CodeReview team can review and approve Commits
+
+* @amalbank/databricks_codereview 
