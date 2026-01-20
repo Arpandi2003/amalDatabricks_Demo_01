@@ -252,7 +252,8 @@ jobs:
           if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
             echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
             git fetch origin "${BRANCH_NAME}"
-            git checkout "${BRANCH_NAME}"
+            # Use -- to disambiguate between file and branch
+            git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
             # Remove all existing files
             git rm -rf . 2>/dev/null || true
           else
@@ -505,7 +506,10 @@ jobs:
           if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
             echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
             git fetch origin "${BRANCH_NAME}"
-            git checkout "${BRANCH_NAME}"
+            # Use -- to disambiguate between file and branch
+            git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+            # Remove all existing files
+            git rm -rf . 2>/dev/null || true
           else
             echo "🆕 Creating new branch ${BRANCH_NAME}..."
             git checkout --orphan "${BRANCH_NAME}"
@@ -514,7 +518,7 @@ jobs:
 
           # Copy backup files to root
           cp -r "${BACKUP_DIR}"/* .
-          git add .
+          git add -A
 
           # Commit with detailed message
           git commit -m "DR Backup QA ${TIMESTAMP}" \
@@ -749,7 +753,10 @@ jobs:
           if git ls-remote --heads origin "${BRANCH_NAME}" | grep -q "${BRANCH_NAME}"; then
             echo "📌 Branch ${BRANCH_NAME} exists, checking out..."
             git fetch origin "${BRANCH_NAME}"
-            git checkout "${BRANCH_NAME}"
+            # Use -- to disambiguate between file and branch
+            git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+            # Remove all existing files
+            git rm -rf . 2>/dev/null || true
           else
             echo "🆕 Creating new branch ${BRANCH_NAME}..."
             git checkout --orphan "${BRANCH_NAME}"
@@ -758,7 +765,7 @@ jobs:
 
           # Copy backup files to root
           cp -r "${BACKUP_DIR}"/* .
-          git add .
+          git add -A
 
           # Commit with detailed message
           git commit -m "DR Backup PROD ${TIMESTAMP}" \
